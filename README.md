@@ -1,2 +1,3 @@
-# tourmaline
-tourmaline is a programming language
+# Tourmaline
+Tourmaline is a programming language inspired good points of many other languages.
+
