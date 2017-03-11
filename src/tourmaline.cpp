@@ -1,4 +1,5 @@
 #include "tourmaline.hpp"
+#include "lexer.hpp"
 
 Tourmaline::Tourmaline() {
 }
@@ -16,6 +17,13 @@ int Tourmaline::run(int _argc, char *_argv[]) {
 }
 
 int Tourmaline::run_from_file(std::string file_name) {
+  Lexer lexer;
+  lexer.set_filename(file_name);
+  auto t = lexer.read_token();
+  while(t.kind != TOK_END) {
+    std::cout << t.line << ":" << t.kind << " " << t.val << std::endl;
+    t = lexer.read_token();
+  }
   return 0;
 }
 

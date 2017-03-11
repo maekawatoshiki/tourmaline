@@ -4,10 +4,12 @@
 
 enum {
   TOK_IDENT,
-  TOK_NUMBER,
+  TOK_INUMBER,
+  TOK_FNUMBER,
   TOK_STRING,
   TOK_SYMBOL,
   TOK_NEWLINE,
+  TOK_END,
 };
 
 struct token_t {
@@ -22,11 +24,11 @@ class Lexer {
   private:
     std::string filename;
     std::ifstream ifs;
+    int cur_line = 1;
+    std::vector<token_t> buffer;
 
-  public:
-    void set_filename(std::string);
-
-    token_t read_token();
+    char get_char();
+    bool next_char_is(char);
 
     token_t read_number();
     token_t read_ident();
@@ -34,4 +36,10 @@ class Lexer {
     token_t read_string();
     token_t read_newline();
     token_t read_symbol();
+
+    char replace_escape();
+  public:
+    void set_filename(std::string);
+
+    token_t read_token();
 };
