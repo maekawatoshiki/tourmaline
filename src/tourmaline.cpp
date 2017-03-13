@@ -20,13 +20,13 @@ int Tourmaline::run(int _argc, char *_argv[]) {
 
 int Tourmaline::run_from_file(std::string file_name) {
   // FOR DEBUGGING
-  // Lexer lexer; lexer.set_filename(file_name);
-  // while(!lexer.eot()) {
-  //   auto t = lexer.get(); std::cout << t.line << ":" << t.kind << " " << t.val << std::endl;
-  // }
-  Parser parser;
-  parser.set_filename(file_name);
-  parser.read_statement();
+  Lexer lexer; lexer.set_filename(file_name);
+  while(!lexer.eot()) {
+    auto t = lexer.get(); std::cout << t.line << ":" << t.kind << " " << t.val << std::endl;
+  }
+  // Parser parser;
+  // parser.set_filename(file_name);
+  // parser.read_statement();
   return 0;
 }
 

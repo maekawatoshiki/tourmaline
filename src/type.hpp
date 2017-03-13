@@ -13,5 +13,10 @@ class Type {
   private:
     TypeKind kind;
   public:
-    Type(TypeKind); 
+    Type(TypeKind);
+
+    TypeKind get();
+    std::string to_string();
 };
+
+typedef std::vector<Type *> Type_vec;
