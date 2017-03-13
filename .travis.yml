@@ -1,0 +1,26 @@
+language: cpp
+
+sudo: false
+
+os:
+  - linux
+  - osx
+
+addons:
+  # apt:
+  #   sources:
+  #     - ubuntu-toolchain-r-test
+  #     - llvm-toolchain-precise-3.8
+  #   packages:
+  #     - llvm-3.8
+  #     - llvm-3.8-dev
+  #     - clang-3.8
+  #     - libedit-dev
+
+before_install:
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@3.8; fi
+
+script:
+  - make
+  # - make test
