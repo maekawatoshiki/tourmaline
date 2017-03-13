@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "error.hpp"
 
 enum {
   TOK_IDENT,
@@ -26,6 +27,7 @@ class Lexer {
     std::ifstream ifs;
     int cur_line = 1;
     std::vector<token_t> buffer;
+    Reporter reporter;
 
     char get_char();
     bool next_char_is(char);

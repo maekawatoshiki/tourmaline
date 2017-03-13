@@ -139,7 +139,7 @@ char Lexer::replace_escape() {
 void Lexer::set_filename(std::string _filename) {
   filename = _filename;
   ifs.open(filename);
-  if(ifs.fail()) exit(0);
+  if(ifs.fail()) reporter.error_file_failed(filename);
 }
 
 token_t Lexer::get() {

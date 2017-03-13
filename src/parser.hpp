@@ -3,10 +3,12 @@
 #include "common.hpp"
 #include "lexer.hpp"
 #include "ast.hpp"
+#include "error.hpp"
 
 class Parser {
   private:
     Lexer lexer;
+    Reporter reporter;
   public:
     void set_filename(std::string);     
 
