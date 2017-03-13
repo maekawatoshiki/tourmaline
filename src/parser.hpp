@@ -11,4 +11,6 @@ class Parser {
     void set_filename(std::string);     
 
     AST_vec read_toplevel();
+
+    AST *read_func_def();
 };
