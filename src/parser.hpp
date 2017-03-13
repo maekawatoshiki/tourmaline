@@ -10,7 +10,8 @@ class Parser {
   public:
     void set_filename(std::string);     
 
-    AST_vec read_toplevel();
-
+    AST_vec read_all();
+      
+    AST *read_statement();
     AST *read_func_def();
 };
