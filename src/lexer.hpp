@@ -30,6 +30,7 @@ class Lexer {
     char get_char();
     bool next_char_is(char);
 
+    token_t read_token();
     token_t read_number();
     token_t read_ident();
     token_t read_blank();
@@ -41,5 +42,9 @@ class Lexer {
   public:
     void set_filename(std::string);
 
-    token_t read_token();
+    token_t get();
+    void    unget(token_t);
+    bool    next_token_is(std::string);
+    bool    skip(std::string);
+    bool    eot();
 };

@@ -1,10 +1,5 @@
 #include "lexer.hpp"
 
-void Lexer::set_filename(std::string _filename) {
-  filename = _filename;
-  ifs.open(filename);
-}
-
 char Lexer::get_char() {
   return ifs.get();
 }
@@ -139,4 +134,38 @@ char Lexer::replace_escape() {
     case 'v': return '\v';
   }
   return c;
+}
+
+void Lexer::set_filename(std::string _filename) {
+  filename = _filename;
+  ifs.open(filename);
+}
+
+token_t Lexer::get() {
+  return read_token();
+}
+
+void Lexer::unget(token_t t) {
+  buffer.push_back(t);
+}
+
+bool Lexer::next_token_is(std::string s) {
+  auto t = get();
+  auto is_next_token_expected = (t.kind == TOK_IDENT && t.kind == TOK_SYMBOL && t.val == s);
+  unget(t);
+  return is_next_token_expected;
+}
+
+bool Lexer::skip(std::string s) { 
+  auto t = get();
+  auto is_next_token_expected = (t.kind == TOK_IDENT && t.kind == TOK_SYMBOL && t.val == s);
+  if(!is_next_token_expected) unget(t);
+  return is_next_token_expected;
+}
+
+bool Lexer::eot() {
+  auto t = get();
+  if(t.kind == TOK_END) return true;
+  unget(t);
+  return false;
 }
