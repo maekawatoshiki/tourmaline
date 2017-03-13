@@ -9,4 +9,4 @@ Tourmaline is a programming language inspired good points of many other language
 # Logo
 
 Current logo design:<br>
-<img src="./logo/tourmaline_logo.svg" width="100x100">
+<img src="./logo/tourmaline_logo.png" width="100x100">
