@@ -5,6 +5,7 @@
 
 enum {
   AST_FUNC_DEF,
+  AST_FUNC_CALL,
 };
 
 class AST {
@@ -30,7 +31,17 @@ class FuncDefAST : AST {
     func_args_t args;
     AST_vec body;
   public:
-    FuncDefAST(std::string, func_args_t, AST_vec);
+    FuncDefAST(std::string name, func_args_t args, AST_vec body);
     virtual int get_kind() const { return AST_FUNC_DEF; };
+    virtual void show();
+};
+
+class FuncCallAST : AST {
+  private:
+    AST *callee;
+    AST_vec args;
+  public:
+    FuncCallAST(AST *callee, AST_vec args);
+    virtual int get_kind() const { return AST_FUNC_CALL; };
     virtual void show();
 };
