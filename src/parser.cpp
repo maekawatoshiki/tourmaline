@@ -177,7 +177,8 @@ AST *Parser::read_func_call() {
   while(!lexer.skip(")")) {
     args.push_back( read_expr() );
     if(lexer.skip(")")) break;
-    lexer.skip(",");
+    if(!lexer.skip(",")) reporter.error(get_filename(), 
+        lexer.get().line, "expected ','");
   }
   lhs = new FuncCallAST(lhs, args);
   return lhs;

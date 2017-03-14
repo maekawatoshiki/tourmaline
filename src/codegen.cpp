@@ -55,7 +55,7 @@ void Codegen::gen(AST_vec ast) {
 
 llvm::Value *Codegen::gen(AST *ast) {
   switch(ast->get_kind()) {
-    case AST_FUNC_DEF: break;
+    case AST_FUNC_DEF:  break;
     case AST_FUNC_CALL: return gen((FuncCallAST *)ast);
     case AST_STRING:    return gen((StringAST *)ast);
   }
@@ -64,9 +64,9 @@ llvm::Value *Codegen::gen(AST *ast) {
 
 llvm::Value *Codegen::gen(FuncCallAST *ast) {
   // TODO: tentative 'puts'. must fix
-  if(static_cast<VariableAST *>(ast->callee)->name == "puts") {
+  if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puts") {
     std::vector<llvm::Value *> args;
-    for(auto a : ast->args)
+    for(auto a : ast->get_args())
       args.push_back(gen(a));
     auto f = mod->getFunction("puts");
     if(!f) reporter.error("", 0, "%s %d f is null", __FILE__, __LINE__);
@@ -76,7 +76,7 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
 }
 
 llvm::Value *Codegen::gen(StringAST *ast) {
-  auto s = llvm::ConstantDataArray::getString(context, ast->str);
+  auto s = llvm::ConstantDataArray::getString(context, ast->get_str());
   llvm::GlobalVariable *gv = new llvm::GlobalVariable(*mod, s->getType(),
       true, llvm::GlobalValue::PrivateLinkage,
       s, "", nullptr,

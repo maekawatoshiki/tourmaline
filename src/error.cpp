@@ -1,6 +1,6 @@
 #include "error.hpp"
 
-void Reporter::error(std::string filename, int line, char *err_content, ...) {
+void Reporter::error(std::string filename, int line, const char *err_content, ...) {
   std::cout << filename << ":" << line << ": error: ";
   va_list args;
   va_start(args, err_content);
