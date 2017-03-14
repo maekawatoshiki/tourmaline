@@ -6,6 +6,10 @@
 enum {
   AST_FUNC_DEF,
   AST_FUNC_CALL,
+  AST_BINARY_OP,
+  AST_VARIABLE,
+  AST_INUMBER,
+  AST_STRING,
 };
 
 class AST {
@@ -25,7 +29,7 @@ struct func_arg_t {
 };
 typedef std::vector<func_arg_t *> func_args_t;
 
-class FuncDefAST : AST {
+class FuncDefAST : public AST {
   private:
     std::string name;
     func_args_t args;
@@ -36,12 +40,49 @@ class FuncDefAST : AST {
     virtual void show();
 };
 
-class FuncCallAST : AST {
+class FuncCallAST : public AST {
   private:
     AST *callee;
     AST_vec args;
   public:
     FuncCallAST(AST *callee, AST_vec args);
     virtual int get_kind() const { return AST_FUNC_CALL; };
+    virtual void show();
+};
+
+class BinaryOpAST : public AST {
+  private:
+    AST *lhs, *rhs;
+    std::string op;
+  public:
+    BinaryOpAST(std::string op, AST *lhs, AST *rhs);
+    virtual int get_kind() const { return AST_BINARY_OP; };
+    virtual void show();
+};
+
+class VariableAST : public AST {
+  private:
+    std::string name;
+  public:
+    VariableAST(std::string);
+    virtual int get_kind() const { return AST_VARIABLE; };
+    virtual void show();
+};
+
+class INumberAST : public AST {
+  private:
+    int number;
+  public:
+    INumberAST(int);
+    virtual int get_kind() const { return AST_INUMBER; };
+    virtual void show();
+};
+
+class StringAST : public AST {
+  private:
+    std::string str;
+  public:
+    StringAST(std::string);
+    virtual int get_kind() const { return AST_STRING; };
     virtual void show();
 };

@@ -43,6 +43,7 @@ class Lexer {
     char replace_escape();
   public:
     void set_filename(std::string);
+    std::string get_filename();
 
     token_t get();
     void    unget(token_t);

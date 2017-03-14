@@ -16,4 +16,11 @@ class Parser {
       
     AST *read_statement();
     AST *read_func_def();
+
+    AST *read_expr();
+    AST *read_if();
+    AST *read_add_sub();
+    AST *read_mul_div_mod();
+    AST *read_func_call();
+    AST *read_primary();
 };

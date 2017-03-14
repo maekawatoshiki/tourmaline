@@ -24,3 +24,35 @@ void FuncCallAST::show() {
   }
   std::cout << ")" << std::endl;
 }
+
+BinaryOpAST::BinaryOpAST(std::string _op, AST *_lhs, AST*_rhs):
+  op(_op), lhs(_lhs), rhs(_rhs) {
+}
+void BinaryOpAST::show() {
+  std::cout << "(binaryop " << op << " (";
+  lhs->show();
+  std::cout << ") (";
+  rhs->show();
+  std::cout << "))";
+}
+
+VariableAST::VariableAST(std::string _name):
+  name(_name) {
+}
+void VariableAST::show() {
+  std::cout << "(var " << name << ")";
+}
+
+INumberAST::INumberAST(int _number):
+  number(_number) {
+}
+void INumberAST::show() {
+  std::cout << number;
+}
+
+StringAST::StringAST(std::string _str):
+  str(_str) {
+}
+void StringAST::show() {
+  std::cout << "\"" << str << "\"";
+}

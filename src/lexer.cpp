@@ -142,6 +142,10 @@ void Lexer::set_filename(std::string _filename) {
   if(ifs.fail()) reporter.error_file_failed(filename);
 }
 
+std::string Lexer::get_filename() {
+  return filename;
+}
+
 token_t Lexer::get() {
   return read_token();
 }
@@ -152,14 +156,14 @@ void Lexer::unget(token_t t) {
 
 bool Lexer::next_token_is(std::string s) {
   auto t = get();
-  auto is_next_token_expected = (t.kind == TOK_IDENT && t.kind == TOK_SYMBOL && t.val == s);
+  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
   unget(t);
   return is_next_token_expected;
 }
 
 bool Lexer::skip(std::string s) { 
   auto t = get();
-  auto is_next_token_expected = (t.kind == TOK_IDENT && t.kind == TOK_SYMBOL && t.val == s);
+  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
   if(!is_next_token_expected) unget(t);
   return is_next_token_expected;
 }

@@ -1,10 +1,12 @@
 #include "error.hpp"
 
-template<typename ... Args>
-void Reporter::error(std::string filename, int line, char *err_content, Args ... args) {
+void Reporter::error(std::string filename, int line, char *err_content, ...) {
   std::cout << filename << ":" << line << ": error: ";
-  printf(err_content, args ...);
-  exit(EXIT_SUCCESS);
+  va_list args;
+  va_start(args, err_content);
+    vprintf(err_content, args); puts("");
+  va_end(args);
+  exit(0);
 }
 
 void Reporter::error_file_failed(std::string filename) {
