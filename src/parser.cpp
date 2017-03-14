@@ -3,11 +3,15 @@
 void Parser::set_filename(std::string filename) { 
   lexer.set_filename(filename);
 }
+std::string Parser::get_filename() {
+  return lexer.get_filename();
+}
 
 AST_vec Parser::read_all() {
   AST_vec statements;
   while(!lexer.eot()) {
-    statements.push_back( read_statement() );
+    auto st = read_statement();
+    if(st) statements.push_back(st);
   }
   return statements;
 }
@@ -27,7 +31,110 @@ AST *Parser::read_expr() {
 }
 
 AST *Parser::read_if() {
+  AST *lhs = read_assign();
+  return lhs;
+}
+
+AST *Parser::read_assign() {
+  AST *lhs = read_logand_logor();
+  bool is_assign = lexer.next_token_is("="),
+       is_aadd   = lexer.next_token_is("+="),
+       is_asub   = lexer.next_token_is("-="),
+       is_amul   = lexer.next_token_is("*="),
+       is_adiv   = lexer.next_token_is("/=");
+  while(is_assign || is_aadd || is_asub ||
+        is_amul || is_adiv) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_assign = lexer.next_token_is("=");
+    is_aadd   = lexer.next_token_is("+=");
+    is_asub   = lexer.next_token_is("-=");
+    is_amul   = lexer.next_token_is("*=");
+    is_adiv   = lexer.next_token_is("/=");
+  }
+  return lhs;
+}
+
+AST *Parser::read_logand_logor() {
+  AST *lhs = read_comparation();
+  bool is_and = lexer.next_token_is("&&"),
+       is_or  = lexer.next_token_is("||");
+  while(is_or  || is_and) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_and = lexer.next_token_is("&&");
+    is_or  = lexer.next_token_is("||");
+  }
+  return lhs;
+}
+
+AST *Parser::read_comparation() {
+  AST *lhs = read_or_xor();
+  bool is_eql = lexer.next_token_is("=="),
+       is_ne  = lexer.next_token_is("!="),
+       is_le  = lexer.next_token_is("<="),
+       is_ge  = lexer.next_token_is(">="),
+       is_lt  = lexer.next_token_is("<"),
+       is_gt  = lexer.next_token_is(">");
+  while(is_eql || is_ne || is_le || is_ge || is_lt || is_gt) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_eql = lexer.next_token_is("==");
+    is_ne  = lexer.next_token_is("!=");
+    is_le  = lexer.next_token_is("<=");
+    is_ge  = lexer.next_token_is(">=");
+    is_lt  = lexer.next_token_is("<");
+    is_gt  = lexer.next_token_is(">");
+  }
+  return lhs;
+}
+
+AST *Parser::read_or_xor() {
+  AST *lhs = read_and();
+  bool is_or  = lexer.next_token_is("|"),
+       is_xor = lexer.next_token_is("^");
+  while(is_or  || is_xor) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_or  = lexer.next_token_is("|");
+    is_xor = lexer.next_token_is("^");
+  }
+  return lhs;
+}
+
+AST *Parser::read_and() {
+  AST *lhs = read_shift();
+  bool is_and = lexer.next_token_is("&");
+  while(is_and) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_and = lexer.next_token_is("&");
+  }
+  return lhs;
+}
+
+AST *Parser::read_shift() {
   AST *lhs = read_add_sub();
+  bool is_lsh = lexer.next_token_is("<<"),
+       is_rsh = lexer.next_token_is(">>");
+  while(is_lsh || is_rsh) {
+    auto op = lexer.get().val;
+    auto rhs = read_expr();
+    lhs = new BinaryOpAST(op, lhs, rhs);
+
+    is_lsh = lexer.next_token_is("<<");
+    is_rsh = lexer.next_token_is(">>");
+  }
   return lhs;
 }
 

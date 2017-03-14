@@ -26,8 +26,8 @@ int Tourmaline::run_from_file(std::string file_name) {
   // }
   Parser parser;
   parser.set_filename(file_name);
-  auto statements = parser.read_statement();
-  statements->show();
+  auto statements = parser.read_all();
+  for(auto st : statements) st->show();
   return 0;
 }
 

@@ -10,7 +10,9 @@ class Parser {
     Lexer lexer;
     Reporter reporter;
   public:
+    // for error handler
     void set_filename(std::string);     
+    std::string get_filename();
 
     AST_vec read_all();
       
@@ -19,6 +21,12 @@ class Parser {
 
     AST *read_expr();
     AST *read_if();
+    AST *read_assign();
+    AST *read_logand_logor();
+    AST *read_comparation();
+    AST *read_or_xor();
+    AST *read_and();
+    AST *read_shift();
     AST *read_add_sub();
     AST *read_mul_div_mod();
     AST *read_func_call();

@@ -112,6 +112,12 @@ token_t Lexer::read_symbol() {
         if(next_char_is('=')) op += get_char();
       }
       break;
+    case '=':
+      if(next_char_is('=')) op += get_char();
+      break;
+    case '!':
+      if(next_char_is('=')) op += get_char();
+      break;
     case '.':
       if(next_char_is('.')) op += get_char();
       if(next_char_is('.')) op += get_char();
