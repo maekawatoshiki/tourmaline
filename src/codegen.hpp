@@ -18,6 +18,7 @@ class Codegen {
     Codegen();
     void set_filename(std::string);
 
+    void def_std_func();
     void gen(AST_vec);
     llvm::Value *gen(AST *);
   

@@ -30,6 +30,7 @@ int Tourmaline::run_from_file(std::string file_name) {
   auto statements = parser.read_all();
   for(auto st : statements) st->show();
   Codegen codegen;
+  codegen.set_filename(file_name);
   codegen.gen(statements);
   return 0;
 }
