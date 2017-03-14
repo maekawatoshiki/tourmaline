@@ -31,10 +31,10 @@ typedef std::vector<func_arg_t *> func_args_t;
 
 class FuncDefAST : public AST {
   private:
+  public:
     std::string name;
     func_args_t args;
     AST_vec body;
-  public:
     FuncDefAST(std::string name, func_args_t args, AST_vec body);
     virtual int get_kind() const { return AST_FUNC_DEF; };
     virtual void show();
@@ -42,9 +42,9 @@ class FuncDefAST : public AST {
 
 class FuncCallAST : public AST {
   private:
+  public:
     AST *callee;
     AST_vec args;
-  public:
     FuncCallAST(AST *callee, AST_vec args);
     virtual int get_kind() const { return AST_FUNC_CALL; };
     virtual void show();
@@ -52,9 +52,9 @@ class FuncCallAST : public AST {
 
 class BinaryOpAST : public AST {
   private:
+  public:
     AST *lhs, *rhs;
     std::string op;
-  public:
     BinaryOpAST(std::string op, AST *lhs, AST *rhs);
     virtual int get_kind() const { return AST_BINARY_OP; };
     virtual void show();
@@ -62,8 +62,8 @@ class BinaryOpAST : public AST {
 
 class VariableAST : public AST {
   private:
-    std::string name;
   public:
+    std::string name;
     VariableAST(std::string);
     virtual int get_kind() const { return AST_VARIABLE; };
     virtual void show();
@@ -71,8 +71,8 @@ class VariableAST : public AST {
 
 class INumberAST : public AST {
   private:
-    int number;
   public:
+    int number;
     INumberAST(int);
     virtual int get_kind() const { return AST_INUMBER; };
     virtual void show();
@@ -80,8 +80,8 @@ class INumberAST : public AST {
 
 class StringAST : public AST {
   private:
-    std::string str;
   public:
+    std::string str;
     StringAST(std::string);
     virtual int get_kind() const { return AST_STRING; };
     virtual void show();

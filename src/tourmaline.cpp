@@ -1,6 +1,7 @@
 #include "tourmaline.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "codegen.hpp"
 
 Tourmaline::Tourmaline() {
 }
@@ -28,6 +29,8 @@ int Tourmaline::run_from_file(std::string file_name) {
   parser.set_filename(file_name);
   auto statements = parser.read_all();
   for(auto st : statements) st->show();
+  Codegen codegen;
+  codegen.gen(statements);
   return 0;
 }
 
