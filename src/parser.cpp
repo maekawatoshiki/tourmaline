@@ -213,10 +213,26 @@ AST *Parser::read_if() {
 
   auto then = new BlockAST([&]() -> AST_vec {
     AST_vec then_;
-    while(!lexer.skip("end")) 
-      then_.push_back( read_statement() );
+    while(!lexer.skip("end") && !lexer.next_token_is("else") && !lexer.next_token_is("elsif")) {
+      auto t = read_statement();
+      if(t) then_.push_back(t);
+    }
     return then_;
   }());
-  return new IfAST(cond, then, nullptr);
+
+  AST *else_ = nullptr;
+  if(lexer.skip("else")) {
+    else_ = new BlockAST([&]() -> AST_vec {
+      AST_vec else_v;
+      while(!lexer.skip("end")) {
+        auto t = read_statement();
+        if(t) else_v.push_back(t);
+      }
+      return else_v;
+    }());
+  } else if(lexer.skip("elsif")) {
+    else_ = read_if();
+  }
+  return new IfAST(cond, then, else_);
 }
 

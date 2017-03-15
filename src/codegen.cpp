@@ -44,19 +44,23 @@ void Codegen::gen(AST_vec ast) {
     gen(st);
   }
   builder.CreateRet(make_int(0));
-  // mod->dump();
+  mod->dump();
 
   jit->addModule(std::unique_ptr<llvm::Module>(mod));
   auto main_symbol = jit->findSymbol("main");
   int (*FP)() = (int (*)())main_symbol.getAddress();
-  puts("### run 'main' ###");
+  puts("\n### run 'main' ###");
   FP();
 }
 
 llvm::Value *Codegen::gen(AST *ast) {
+  if(!ast) return nullptr;
   switch(ast->get_kind()) {
     case AST_FUNC_DEF:  break;
+    case AST_IF:        return gen((IfAST *)ast);
+    case AST_BLOCK:     return gen((BlockAST *)ast);
     case AST_FUNC_CALL: return gen((FuncCallAST *)ast);
+    case AST_INUMBER:   return gen((INumberAST *)ast);
     case AST_STRING:    return gen((StringAST *)ast);
   }
   return nullptr;
@@ -75,6 +79,56 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
   return nullptr;
 }
 
+llvm::Value *Codegen::gen(IfAST *ast) {
+  auto cond = gen(ast->get_cond());
+  cond = builder.CreateICmpNE(
+      cond,
+      cond->getType()->isPointerTy() ?
+      llvm::ConstantPointerNull::getNullValue(cond->getType()) :
+      make_int(0, cond->getType()));
+  auto func = builder.GetInsertBlock()->getParent();
+
+  llvm::BasicBlock *bb_then = llvm::BasicBlock::Create(context, "then", func);
+  llvm::BasicBlock *bb_else = llvm::BasicBlock::Create(context, "else", func);
+  llvm::BasicBlock *bb_merge= llvm::BasicBlock::Create(context, "merge",func);
+
+  builder.CreateCondBr(cond, bb_then, bb_else);
+  builder.SetInsertPoint(bb_then);
+
+  auto then_val = ast->get_then_st() ? gen(ast->get_then_st()) : nullptr;
+  builder.CreateBr(bb_merge);
+  bb_then = builder.GetInsertBlock();
+  
+  builder.SetInsertPoint(bb_else);
+  
+  auto else_val = ast->get_else_st() ? gen(ast->get_else_st()) : nullptr;
+  builder.CreateBr(bb_merge);
+  bb_else = builder.GetInsertBlock();
+
+  builder.SetInsertPoint(bb_merge);
+
+  if(!then_val) then_val = make_int(0);
+  if(!else_val) else_val = make_int(0);
+  
+  llvm::PHINode *pnode = builder.CreatePHI(then_val->getType(), 2);
+  pnode->addIncoming(then_val, bb_then);
+  pnode->addIncoming(else_val, bb_else);
+  return pnode; 
+}
+
+llvm::Value *Codegen::gen(BlockAST *ast) {
+  auto stmts = ast->get_statements();
+  llvm::Value *ret = nullptr;
+  for(auto stmt : stmts) {
+    ret = gen(stmt);
+  }
+  return ret;
+}
+
+llvm::Value *Codegen::gen(INumberAST *ast) {
+  return make_int(ast->get_number());
+}
+
 llvm::Value *Codegen::gen(StringAST *ast) {
   auto s = llvm::ConstantDataArray::getString(context, ast->get_str());
   llvm::GlobalVariable *gv = new llvm::GlobalVariable(*mod, s->getType(),
@@ -89,3 +143,18 @@ llvm::Value *Codegen::make_int(int n, llvm::Type *ty) {
     return llvm::ConstantPointerNull::get(static_cast<llvm::PointerType *>(ty));
   return llvm::ConstantInt::get(ty, n);
 }
+
+llvm::Value *Codegen::type_cast(llvm::Value *val, llvm::Type *to) {                
+  if(val->getType()->isIntegerTy() && to->isIntegerTy()) {                         
+    llvm::IntegerType *ival = (llvm::IntegerType *)val->getType();                 
+    llvm::IntegerType *ito  = (llvm::IntegerType *)to;                             
+    if(ival->getBitWidth() < ito->getBitWidth())                                   
+      return builder.CreateZExtOrBitCast(val, to);                                 
+  } else if(val->getType()->isIntegerTy() && to->isDoubleTy()) {                   
+    return builder.CreateSIToFP(val, to);                                          
+  } else if(val->getType()->isDoubleTy() && to->isIntegerTy()) {                   
+    return builder.CreateFPToSI(val, to);                                          
+  } else if(to->isVoidTy()) return val;                                            
+  return builder.CreateTruncOrBitCast(val, to);                                    
+}                                                                                  
+

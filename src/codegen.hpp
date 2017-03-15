@@ -23,7 +23,11 @@ class Codegen {
     llvm::Value *gen(AST *);
   
     llvm::Value *gen(FuncCallAST *);
+    llvm::Value *gen(IfAST *);
+    llvm::Value *gen(BlockAST *);
+    llvm::Value *gen(INumberAST *);
     llvm::Value *gen(StringAST *);
 
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));
+    llvm::Value *type_cast(llvm::Value *, llvm::Type *);
 };
