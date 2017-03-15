@@ -26,11 +26,6 @@ AST *Parser::read_func_def() {
 }
 
 AST *Parser::read_expr() {
-  AST *lhs = read_if();
-  return lhs;
-}
-
-AST *Parser::read_if() {
   AST *lhs = read_assign();
   return lhs;
 }
@@ -194,7 +189,10 @@ AST *Parser::read_primary() {
     case TOK_STRING:
       return new StringAST(t.val);
     case TOK_IDENT:
-      return new VariableAST(t.val);
+      if(t.val == "if") {
+        return read_if();
+      } else 
+        return new VariableAST(t.val);
     case TOK_SYMBOL:
       if(t.val == "(") {
         auto expr = read_expr();
@@ -205,3 +203,20 @@ AST *Parser::read_primary() {
   }
   return nullptr;
 }
+
+AST *Parser::read_if() {
+  auto cond = read_expr();
+  if(!lexer.skip("then")) 
+     if(!lexer.skip(";")) { auto t = lexer.get();
+      if(t.kind != TOK_NEWLINE) 
+        reporter.error(get_filename(), t.line, "expected '\\n', ';' or 'then'");}
+
+  auto then = new BlockAST([&]() -> AST_vec {
+    AST_vec then_;
+    while(!lexer.skip("end")) 
+      then_.push_back( read_statement() );
+    return then_;
+  }());
+  return new IfAST(cond, then, nullptr);
+}
+

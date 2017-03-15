@@ -6,6 +6,8 @@
 enum {
   AST_FUNC_DEF,
   AST_FUNC_CALL,
+  AST_IF,
+  AST_BLOCK,
   AST_BINARY_OP,
   AST_VARIABLE,
   AST_INUMBER,
@@ -42,6 +44,30 @@ class FuncDefAST : public AST {
     std::string get_name() const { return name; };
     func_args_t get_args() const { return args; };
     AST_vec     get_body() const { return body; };
+};
+
+class IfAST : public AST {
+  private:
+    AST *cond, *then_st, *else_st;
+  public:
+    IfAST(AST *, AST *, AST * = nullptr);
+    virtual int get_kind() const { return AST_IF; };
+    virtual void show();
+
+    AST *get_cond() const { return cond; };
+    AST *get_then_st() const { return then_st; };
+    AST *get_else_st() const { return else_st; };
+};
+
+class BlockAST : public AST {
+  private: 
+    AST_vec statements;
+  public:
+    BlockAST(AST_vec);
+    virtual int get_kind() const { return AST_BLOCK; };
+    virtual void show();
+
+    AST_vec get_statements() const { return statements; };
 };
 
 class FuncCallAST : public AST {

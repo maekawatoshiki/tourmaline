@@ -8,7 +8,31 @@ void FuncDefAST::show() {
   for(auto arg : args) {
     std::cout << " (" << arg->type->to_string() << " " << arg->name << ")";
   }
-  std::cout << ")" << std::endl;
+  std::cout << ")";
+}
+
+IfAST::IfAST(AST *_cond, AST *_then_st, AST *_else_st):
+  cond(_cond), then_st(_then_st), else_st(_else_st) {
+}
+void IfAST::show() {
+  std::cout << "(if (";
+  cond->show();
+  std::cout << ") (";
+  if(then_st) then_st->show();
+  std::cout << ") (";
+  if(else_st) else_st->show();
+  std::cout << "))";
+}
+
+BlockAST::BlockAST(AST_vec _statements):
+  statements(_statements) {
+}
+void BlockAST::show() {
+  std::cout << "(";
+  for(auto s : statements) {
+    if(s) s->show();
+  }
+  std::cout << ")";
 }
 
 FuncCallAST::FuncCallAST(AST *_callee, AST_vec _args):
@@ -22,7 +46,7 @@ void FuncCallAST::show() {
     arg->show();
     std::cout << ")";
   }
-  std::cout << ")" << std::endl;
+  std::cout << ")";
 }
 
 BinaryOpAST::BinaryOpAST(std::string _op, AST *_lhs, AST*_rhs):

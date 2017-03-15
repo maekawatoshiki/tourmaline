@@ -20,7 +20,6 @@ class Parser {
     AST *read_func_def();
 
     AST *read_expr();
-    AST *read_if();
     AST *read_assign();
     AST *read_logand_logor();
     AST *read_comparation();
@@ -31,4 +30,5 @@ class Parser {
     AST *read_mul_div_mod();
     AST *read_func_call();
     AST *read_primary();
+    AST *read_if();
 };

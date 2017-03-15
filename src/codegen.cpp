@@ -44,7 +44,7 @@ void Codegen::gen(AST_vec ast) {
     gen(st);
   }
   builder.CreateRet(make_int(0));
-  mod->dump();
+  // mod->dump();
 
   jit->addModule(std::unique_ptr<llvm::Module>(mod));
   auto main_symbol = jit->findSymbol("main");
