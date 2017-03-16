@@ -19,18 +19,18 @@ int Tourmaline::run(int _argc, char *_argv[]) {
   return run_from_file(argv[1]);
 }
 
-int Tourmaline::run_from_file(std::string file_name) {
+int Tourmaline::run_from_file(std::string filename) {
   // FOR DEBUGGING
   // Lexer lexer; lexer.set_filename(file_name);
   // while(!lexer.eot()) {
   //   auto t = lexer.get(); std::cout << t.line << ":" << t.kind << " " << t.val << std::endl;
   // }
   Parser parser;
-  parser.set_filename(file_name);
+  parser.set_filename(filename);
   auto statements = parser.read_all();
   for(auto st : statements) st->show();
   Codegen codegen;
-  codegen.set_filename(file_name);
+  codegen.set_filename(filename);
   codegen.gen(statements);
   return 0;
 }

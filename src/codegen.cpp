@@ -95,20 +95,18 @@ llvm::Value *Codegen::gen(IfAST *ast) {
   builder.CreateCondBr(cond, bb_then, bb_else);
   builder.SetInsertPoint(bb_then);
 
-  auto then_val = ast->get_then_st() ? gen(ast->get_then_st()) : nullptr;
+  // then_val and else_val are tentatibly 'i32 0' by default. 
+  auto then_val = ast->get_then_st() ? gen(ast->get_then_st()) : make_int(0);
   builder.CreateBr(bb_merge);
   bb_then = builder.GetInsertBlock();
   
   builder.SetInsertPoint(bb_else);
   
-  auto else_val = ast->get_else_st() ? gen(ast->get_else_st()) : nullptr;
+  auto else_val = ast->get_else_st() ? gen(ast->get_else_st()) : make_int(0);
   builder.CreateBr(bb_merge);
   bb_else = builder.GetInsertBlock();
 
   builder.SetInsertPoint(bb_merge);
-
-  if(!then_val) then_val = make_int(0);
-  if(!else_val) else_val = make_int(0);
   
   llvm::PHINode *pnode = builder.CreatePHI(then_val->getType(), 2);
   pnode->addIncoming(then_val, bb_then);
@@ -116,9 +114,13 @@ llvm::Value *Codegen::gen(IfAST *ast) {
   return pnode; 
 }
 
+llvm::Value *Codegen::make_if(llvm::Value *cond, llvm::BasicBlock *bb_then, llvm::BasicBlock *bb_else) {
+  return nullptr;
+}
+
 llvm::Value *Codegen::gen(BlockAST *ast) {
   auto stmts = ast->get_statements();
-  llvm::Value *ret = nullptr;
+  llvm::Value *ret = make_int(0);
   for(auto stmt : stmts) {
     ret = gen(stmt);
   }

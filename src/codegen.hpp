@@ -28,6 +28,8 @@ class Codegen {
     llvm::Value *gen(INumberAST *);
     llvm::Value *gen(StringAST *);
 
+    llvm::Value *make_if(llvm::Value *cond, llvm::BasicBlock *, llvm::BasicBlock *);
+
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));
     llvm::Value *type_cast(llvm::Value *, llvm::Type *);
 };

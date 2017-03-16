@@ -211,6 +211,7 @@ AST *Parser::read_if() {
       if(t.kind != TOK_NEWLINE) 
         reporter.error(get_filename(), t.line, "expected '\\n', ';' or 'then'");}
 
+  // TODO: not beautiful, FIX
   auto then = new BlockAST([&]() -> AST_vec {
     AST_vec then_;
     while(!lexer.skip("end") && !lexer.next_token_is("else") && !lexer.next_token_is("elsif")) {
