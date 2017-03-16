@@ -37,6 +37,7 @@ class Codegen {
 
     llvm::Value *make_if(llvm::Value *cond, llvm::BasicBlock *, llvm::BasicBlock *);
     llvm::Value *make_assign(AST *dst, AST *src);
+    llvm::Value *make_add   (AST *dst, AST *src);
 
     llvm::Value *get_var_val(VariableAST *);
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));

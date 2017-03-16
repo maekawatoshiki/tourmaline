@@ -16,7 +16,26 @@ int Tourmaline::run(int _argc, char *_argv[]) {
     return 0;
   }
 
-  return run_from_file(argv[1]);
+  std::string filename;
+  bool opt_emit_ir = false,
+       opt_version = false,
+       opt_help    = false;
+  for(int i = 1; i < argc; i++) {
+    if(!strcmp(argv[i], "-emit-ir")) {
+      opt_emit_ir = true;
+    } else if(!strcmp(argv[i], "-v")) {
+      opt_version = true;
+    } else if(!strcmp(argv[i], "-h")) {
+      opt_help = true;
+    } else filename = argv[i];
+  }
+  if(opt_version) show_version();
+  if(opt_help)    show_usage();
+
+  if(!filename.empty()) run_from_file(filename);
+
+  // if(opt_emit_ir) mod->dump();
+  return 0;
 }
 
 int Tourmaline::run_from_file(std::string filename) {
@@ -38,6 +57,9 @@ int Tourmaline::run_from_file(std::string filename) {
 
 void Tourmaline::show_usage() {
   puts("Usage: tourmaline [file]");
+  // puts("   -emit-ir   : emit llvm-ir to stderr");
+  puts("   -v         : show version info.");
+  puts("   -h         : show this help");
 }
 void Tourmaline::show_version() {
   puts("tourmaline " TOURMALINE_VERSION_S " (build " __DATE__ " " __TIME__ ")");

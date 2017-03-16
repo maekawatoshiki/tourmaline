@@ -77,6 +77,7 @@ llvm::Value *Codegen::gen(AST *ast) {
     case AST_INUMBER:   return gen((INumberAST *)ast);
     case AST_STRING:    return gen((StringAST *)ast);
   }
+  reporter.error("", 0, "unknown AST");
   return nullptr;
 }
 
@@ -144,6 +145,7 @@ llvm::Value *Codegen::gen(BlockAST *ast) {
 llvm::Value *Codegen::gen(BinaryOpAST *ast) {
   auto op = ast->get_op();
   if(op == "=") return make_assign(ast->get_lhs(), ast->get_rhs());
+  if(op == "+") return make_add   (ast->get_lhs(), ast->get_rhs());
   reporter.error("", 0, "unknown operator %s %d", __FILE__, __LINE__);
   return nullptr;
 }
@@ -189,6 +191,14 @@ llvm::Value *Codegen::make_assign(AST *dst, AST *src) {
     dst_val = gen(dst);
   }
   return builder.CreateStore(src_val, dst_val);
+}
+llvm::Value *Codegen::make_add(AST *alhs, AST *arhs) {
+  auto lhs = gen(alhs),
+       rhs = gen(arhs);
+  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+    return builder.CreateAdd(lhs, rhs);
+  }
+  return nullptr;
 }
 
 llvm::Value *Codegen::get_var_val(VariableAST *ast) {
