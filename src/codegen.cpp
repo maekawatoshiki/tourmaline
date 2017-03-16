@@ -30,6 +30,14 @@ void Codegen::def_std_func() {
       }, false);
   llvm::Function::Create(puts_func_ty, 
       llvm::Function::ExternalLinkage, "puts", mod);
+
+  // define 'puts'
+  auto puti_func_ty = llvm::FunctionType::get(
+      builder.getInt32Ty(), std::vector<llvm::Type *>{
+        builder.getInt32Ty()
+      }, false);
+  llvm::Function::Create(puti_func_ty, 
+      llvm::Function::ExternalLinkage, "puti", mod);
 }
 
 void Codegen::gen(AST_vec ast) {
@@ -38,6 +46,9 @@ void Codegen::gen(AST_vec ast) {
       builder.getInt32Ty(), std::vector<llvm::Type *>(), false);
   auto main_func = llvm::Function::Create(main_func_ty, 
       llvm::Function::ExternalLinkage, "main", mod);
+  funcmap.add("main", Type_vec{}, new Type(TYPEKIND_INT));
+  cur_func = funcmap.get("main");
+
   auto bb = llvm::BasicBlock::Create(context, "entry", main_func);
   builder.SetInsertPoint(bb);
   for(auto st : ast) {
@@ -45,6 +56,7 @@ void Codegen::gen(AST_vec ast) {
   }
   builder.CreateRet(make_int(0));
   mod->dump();
+  llvm::verifyModule(*mod);
 
   jit->addModule(std::unique_ptr<llvm::Module>(mod));
   auto main_symbol = jit->findSymbol("main");
@@ -60,6 +72,8 @@ llvm::Value *Codegen::gen(AST *ast) {
     case AST_IF:        return gen((IfAST *)ast);
     case AST_BLOCK:     return gen((BlockAST *)ast);
     case AST_FUNC_CALL: return gen((FuncCallAST *)ast);
+    case AST_BINARY_OP: return gen((BinaryOpAST *)ast);
+    case AST_VARIABLE:  return gen((VariableAST *)ast);
     case AST_INUMBER:   return gen((INumberAST *)ast);
     case AST_STRING:    return gen((StringAST *)ast);
   }
@@ -67,13 +81,17 @@ llvm::Value *Codegen::gen(AST *ast) {
 }
 
 llvm::Value *Codegen::gen(FuncCallAST *ast) {
-  // TODO: tentative 'puts'. must fix
+  // TODO: tentative implementation. must fix
+  std::vector<llvm::Value *> args;
+  for(auto a : ast->get_args())
+    args.push_back(gen(a));
   if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puts") {
-    std::vector<llvm::Value *> args;
-    for(auto a : ast->get_args())
-      args.push_back(gen(a));
     auto f = mod->getFunction("puts");
     if(!f) reporter.error("", 0, "%s %d f is null", __FILE__, __LINE__);
+    return builder.CreateCall(f, args);
+  } else if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puti") {
+    auto f = mod->getFunction("puti");
+    if(!f) reporter.error("", 0, "is %d f is null", __FILE__, __LINE__);
     return builder.CreateCall(f, args);
   }
   return nullptr;
@@ -114,10 +132,6 @@ llvm::Value *Codegen::gen(IfAST *ast) {
   return pnode; 
 }
 
-llvm::Value *Codegen::make_if(llvm::Value *cond, llvm::BasicBlock *bb_then, llvm::BasicBlock *bb_else) {
-  return nullptr;
-}
-
 llvm::Value *Codegen::gen(BlockAST *ast) {
   auto stmts = ast->get_statements();
   llvm::Value *ret = make_int(0);
@@ -125,6 +139,20 @@ llvm::Value *Codegen::gen(BlockAST *ast) {
     ret = gen(stmt);
   }
   return ret;
+}
+
+llvm::Value *Codegen::gen(BinaryOpAST *ast) {
+  auto op = ast->get_op();
+  if(op == "=") return make_assign(ast->get_lhs(), ast->get_rhs());
+  reporter.error("", 0, "unknown operator %s %d", __FILE__, __LINE__);
+  return nullptr;
+}
+
+llvm::Value *Codegen::gen(VariableAST *ast) {
+  auto name = ast->get_name();
+  auto v = cur_func->varmap.get(name);
+  if(!v) reporter.error(filename, 0, "undefined var '%s'", name.c_str());
+  return builder.CreateLoad(v->val);
 }
 
 llvm::Value *Codegen::gen(INumberAST *ast) {
@@ -138,6 +166,36 @@ llvm::Value *Codegen::gen(StringAST *ast) {
       s, "", nullptr,
       llvm::GlobalVariable::NotThreadLocal, 0);
   return builder.CreateInBoundsGEP(gv->getValueType(), gv, std::vector<llvm::Value *> { make_int(0), make_int(0) });
+}
+
+llvm::Value *Codegen::make_if(llvm::Value *cond, llvm::BasicBlock *bb_then, llvm::BasicBlock *bb_else) {
+  return nullptr;
+}
+
+llvm::Value *Codegen::make_assign(AST *dst, AST *src) {
+  auto src_val = gen(src);
+  auto type = TypeUtil::to_type(src_val->getType());
+  llvm::Value *dst_val = nullptr;
+  if(VariableAST *vast = static_cast<VariableAST *>(dst)) {
+    auto name = vast->get_name();
+    if(!cur_func->varmap.get(name)) {
+      cur_func->varmap.add(name, type);
+      auto v = cur_func->varmap.get(name);
+      v->val = builder.CreateAlloca(src_val->getType(), nullptr, name);
+    }
+    dst_val = get_var_val(vast);
+  } else {
+    // TODO: tentative
+    dst_val = gen(dst);
+  }
+  return builder.CreateStore(src_val, dst_val);
+}
+
+llvm::Value *Codegen::get_var_val(VariableAST *ast) {
+  auto name = ast->get_name();
+  auto v = cur_func->varmap.get(name);
+  if(!v) return nullptr;
+  return v->val;
 }
 
 llvm::Value *Codegen::make_int(int n, llvm::Type *ty) {
@@ -160,3 +218,10 @@ llvm::Value *Codegen::type_cast(llvm::Value *val, llvm::Type *to) {
   return builder.CreateTruncOrBitCast(val, to);                                    
 }                                                                                  
 
+
+// standard func
+extern "C" {
+  int puti(int i) {
+    return printf("%d\n", i);
+  }
+};

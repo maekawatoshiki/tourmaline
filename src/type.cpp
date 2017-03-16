@@ -8,6 +8,10 @@ TypeKind Type::get() {
   return kind;
 }
 
+void Type::set(Type *ty) {
+  this->kind = ty->get();
+}
+
 std::string Type::to_string() {
   switch(kind) {
     case TYPEKIND_INT: return "int";
@@ -16,3 +20,14 @@ std::string Type::to_string() {
   }
   return "";
 }
+
+namespace TypeUtil {
+  Type *to_type(llvm::Type *ty) {
+    if(ty->isIntegerTy()) return new Type(TYPEKIND_INT);
+    if(ty->isPointerTy() && 
+        ty->getPointerElementType()->isIntegerTy(8)) 
+      return new Type(TYPEKIND_STRING);
+    if(ty->isDoubleTy()) return new Type(TYPEKIND_FLOAT);
+    return nullptr;
+  }
+};
