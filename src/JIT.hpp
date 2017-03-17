@@ -26,7 +26,7 @@ public:
 
   TargetMachine &getTargetMachine() { return *TM; }
 
-  ModuleHandleT addModule(std::unique_ptr<Module> M) {
+  ModuleHandleT addModule(llvm::Module *mod) {
     // We need a memory manager to allocate memory and resolve symbols for this
     // new module. Create one that resolves symbols by looking back into the
     // JIT.
@@ -37,7 +37,7 @@ public:
           return RuntimeDyld::SymbolInfo(nullptr);
         },
         [](const std::string &S) { return nullptr; });
-    auto H = CompileLayer.addModuleSet(singletonSet(std::move(M)),
+    auto H = CompileLayer.addModuleSet(singletonSet(mod),
                                        make_unique<SectionMemoryManager>(),
                                        std::move(Resolver));
 

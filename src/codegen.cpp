@@ -55,10 +55,9 @@ void Codegen::gen(AST_vec ast) {
     gen(st);
   }
   builder.CreateRet(make_int(0));
-  mod->dump();
   llvm::verifyModule(*mod);
 
-  jit->addModule(std::unique_ptr<llvm::Module>(mod));
+  jit->addModule(mod);//std::unique_ptr<llvm::Module>(mod));
   auto main_symbol = jit->findSymbol("main");
   int (*FP)() = (int (*)())main_symbol.getAddress();
   puts("\n### run 'main' ###");

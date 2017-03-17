@@ -34,7 +34,7 @@ int Tourmaline::run(int _argc, char *_argv[]) {
 
   if(!filename.empty()) run_from_file(filename);
 
-  // if(opt_emit_ir) mod->dump();
+  if(opt_emit_ir) mod->dump();
   return 0;
 }
 
@@ -57,7 +57,7 @@ int Tourmaline::run_from_file(std::string filename) {
 
 void Tourmaline::show_usage() {
   puts("Usage: tourmaline [file]");
-  // puts("   -emit-ir   : emit llvm-ir to stderr");
+  puts("   -emit-ir   : emit llvm-ir to stderr");
   puts("   -v         : show version info.");
   puts("   -h         : show this help");
 }
