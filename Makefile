@@ -13,6 +13,13 @@ DEPS := $(SRCS:%.cpp=%.d)
 $(PROG): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ -rdynamic $(OBJS) $(LIBS)
 
+test: $(PROG)
+	@for t in $$(ls example); do \
+		echo "Compiling $$t"; \
+		./tourmaline example/$$t > /dev/null || (echo "-> error!" && exit 1); \
+  done
+	@echo "done"
+
 clean:
 	-$(RM) $(PROG) $(OBJS) $(DEPS)
 

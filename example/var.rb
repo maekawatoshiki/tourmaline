@@ -1,4 +1,4 @@
 a = "hello"
 puts(a)
 i = 12
-puti(i)
+puts("%d", i)

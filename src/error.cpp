@@ -6,10 +6,10 @@ void Reporter::error(std::string filename, int line, const char *err_content, ..
   va_start(args, err_content);
     vprintf(err_content, args); puts("");
   va_end(args);
-  exit(0);
+  exit(EXIT_FAILURE);
 }
 
 void Reporter::error_file_failed(std::string filename) {
   std::cout << "error: not found file '" << filename << "'" << std::endl;
-  exit(0);
+  exit(EXIT_FAILURE);
 }
