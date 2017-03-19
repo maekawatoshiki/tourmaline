@@ -2,7 +2,7 @@
 def loop(n int)
   if n > 0
     loop(n - 1)
-    printf("fact(%d) = %d\n", n, fact(n))
+    puts("fact(%d) = %d", n, fact(n))
   end
 end
 

@@ -25,27 +25,12 @@ Codegen::Codegen() {
 void Codegen::def_std_func() {
   // define 'puts'
   auto puts_func_ty = llvm::FunctionType::get(
-      builder.getInt32Ty(), std::vector<llvm::Type *>{
-        builder.getInt8PtrTy()
-      }, false);
-  funcmap.add("puts", new Type(TYPEKIND_INT), Type_vec{new Type(TYPEKIND_STRING)}, 
-        llvm::Function::Create(puts_func_ty, 
-          llvm::Function::ExternalLinkage, "puts", mod));
-  // define 'puti'
-  auto puti_func_ty = llvm::FunctionType::get(
-      builder.getInt32Ty(), std::vector<llvm::Type *>{
-        builder.getInt32Ty()
-      }, false);
-  llvm::Function::Create(puti_func_ty, 
-      llvm::Function::ExternalLinkage, "puti", mod);
-  // define 'printf'
-  auto printf_func_ty = llvm::FunctionType::get(
-      builder.getInt32Ty(), std::vector<llvm::Type *>{
+      builder.getVoidTy(), std::vector<llvm::Type *>{
         builder.getInt8PtrTy()
       }, true);
-  funcmap.add("printf", new Type(TYPEKIND_INT), Type_vec{new Type(TYPEKIND_STRING)}, 
-        llvm::Function::Create(printf_func_ty, 
-          llvm::Function::ExternalLinkage, "printf", mod));
+  funcmap.add("puts", new Type(TYPEKIND_NONE), Type_vec{new Type(TYPEKIND_STRING)}, 
+        llvm::Function::Create(puts_func_ty, 
+          llvm::Function::ExternalLinkage, "puts_va", mod));
 }
 
 void Codegen::gen(AST_vec ast) {
@@ -155,15 +140,10 @@ llvm::Value *Codegen::gen(FuncDefAST *ast) {
 }
 
 llvm::Value *Codegen::gen(FuncCallAST *ast) {
-  // TODO: tentative implementation. must fix
   std::vector<llvm::Value *> args;
   for(auto a : ast->get_args())
     args.push_back(gen(a));
-  if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puti") {
-    auto f = mod->getFunction("puti");
-    if(!f) reporter.error("", 0, "is %d f is null", __FILE__, __LINE__);
-    return builder.CreateCall(f, args);
-  } else {
+  {
     llvm::Function *func = nullptr;
     if(VariableAST *vast = static_cast<VariableAST *>(ast->get_callee())) {
       auto f = funcmap.get(vast->get_name());
@@ -203,7 +183,11 @@ llvm::Value *Codegen::gen(IfAST *ast) {
   bb_else = builder.GetInsertBlock();
 
   builder.SetInsertPoint(bb_merge);
-  
+ 
+  if(then_val->getType()->isVoidTy() || else_val->getType()->isVoidTy()) {
+    return make_int(0);
+  } 
+
   llvm::PHINode *pnode = builder.CreatePHI(then_val->getType(), 2);
   pnode->addIncoming(then_val, bb_then);
   pnode->addIncoming(else_val, bb_else);
@@ -352,5 +336,12 @@ llvm::AllocaInst *Codegen::create_entry_alloca(llvm::Function *TheFunction, std:
 extern "C" {
   int puti(int i) {
     return printf("%d\n", i);
+  }
+  void puts_va(const char *str, ...) {
+    va_list args;
+    va_start(args, str);
+    vprintf(str, args); 
+    puts("");
+    va_end(args);
   }
 };

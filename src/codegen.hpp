@@ -54,4 +54,5 @@ class Codegen {
 
 extern "C" {
   int puti(int);
+  void puts_va(const char *, ...);
 };
