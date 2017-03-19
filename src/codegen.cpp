@@ -334,9 +334,6 @@ llvm::AllocaInst *Codegen::create_entry_alloca(llvm::Function *TheFunction, std:
 
 // standard func
 extern "C" {
-  int puti(int i) {
-    return printf("%d\n", i);
-  }
   void puts_va(const char *str, ...) {
     va_list args;
     va_start(args, str);
