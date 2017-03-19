@@ -22,7 +22,37 @@ AST *Parser::read_statement() {
 }
 
 AST *Parser::read_func_def() {
-  return nullptr;
+  std::string name = lexer.get().val;
+  func_args_t args; 
+  if(lexer.skip("(")) {
+    while(!lexer.skip(")") && !lexer.eot()) {
+      std::string name = lexer.get().val;
+      Type *type = new Type(TYPEKIND_INT);
+
+      std::string tyname = lexer.get().val;
+      type = TypeUtil::to_type(tyname);
+
+      args.push_back(new func_arg_t(name, type));
+      if(lexer.skip(")")) break;
+      lexer.expect_skip(",");
+    }
+  }
+  auto ret_ty = [&]() -> Type * {
+    auto t = lexer.get();
+    if(t.kind == TOK_IDENT) {
+      return TypeUtil::to_type(t.val);
+    } else lexer.unget(t);
+    return new Type(TYPEKIND_INT);
+  }();
+  auto body = new BlockAST([&]() -> AST_vec {
+    AST_vec body_;
+    while(!lexer.skip("end")) {
+      auto t = read_statement();
+      if(t) body_.push_back(t);
+    }
+    return body_;
+  }());
+  return new FuncDefAST(name, ret_ty, args, body);
 }
 
 AST *Parser::read_expr() {

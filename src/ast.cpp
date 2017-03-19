@@ -1,13 +1,16 @@
 #include "ast.hpp"
 
-FuncDefAST::FuncDefAST(std::string _name, func_args_t _args, AST_vec _body):
-  name(_name), args(_args), body(_body) {
+FuncDefAST::FuncDefAST(std::string _name, Type *_ret_ty, func_args_t _args, AST *_body):
+  name(_name), ret_ty(_ret_ty), args(_args), body(_body) {
 }
 void FuncDefAST::show() {
   std::cout << "(def-func " << name;
   for(auto arg : args) {
     std::cout << " (" << arg->type->to_string() << " " << arg->name << ")";
   }
+  std::cout << "(";
+  body->show();
+  std::cout << ")";
   std::cout << ")";
 }
 

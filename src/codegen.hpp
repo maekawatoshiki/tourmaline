@@ -27,6 +27,7 @@ class Codegen {
     void gen(AST_vec);
     llvm::Value *gen(AST *);
   
+    llvm::Value *gen(FuncDefAST *);
     llvm::Value *gen(FuncCallAST *);
     llvm::Value *gen(IfAST *);
     llvm::Value *gen(BlockAST *);
@@ -38,10 +39,15 @@ class Codegen {
     llvm::Value *make_if(llvm::Value *cond, llvm::BasicBlock *, llvm::BasicBlock *);
     llvm::Value *make_assign(AST *dst, AST *src);
     llvm::Value *make_add   (AST *dst, AST *src);
+    llvm::Value *make_sub   (AST *dst, AST *src);
+    llvm::Value *make_mul   (AST *dst, AST *src);
+    llvm::Value *make_eql   (AST *dst, AST *src);
+    llvm::Value *make_gt    (AST *dst, AST *src);
 
     llvm::Value *get_var_val(VariableAST *);
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));
     llvm::Value *type_cast(llvm::Value *, llvm::Type *);
+    llvm::AllocaInst *create_entry_alloca(llvm::Function *, std::string &, llvm::Type *);
 };
 
 // th(is|ese) func will move to 'src/std_func.hpp'

@@ -19,6 +19,11 @@ token_t Lexer::read_token() {
   }
   char c = ifs.get();
   if(ifs.eof()) return token_t(TOK_END, "");
+  if(c == '#') {
+    while(ifs.get() != '\n' && !ifs.eof()){};
+    cur_line++;
+    return read_token();
+  }
   ifs.unget();
        if(isdigit(c))             return read_number();
   else if(isalpha(c) || c == '_') return read_ident();
@@ -171,6 +176,13 @@ bool Lexer::skip(std::string s) {
   auto t = get();
   auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
   if(!is_next_token_expected) unget(t);
+  return is_next_token_expected;
+}
+
+bool Lexer::expect_skip(std::string s) { 
+  auto t = get();
+  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
+  if(!is_next_token_expected) reporter.error(get_filename(), t.line, "expected '%s'", s.c_str());
   return is_next_token_expected;
 }
 

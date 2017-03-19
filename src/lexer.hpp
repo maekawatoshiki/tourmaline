@@ -49,5 +49,6 @@ class Lexer {
     void    unget(token_t);
     bool    next_token_is(std::string);
     bool    skip(std::string);
+    bool    expect_skip(std::string);
     bool    eot(); // END OF TOKEN
 };

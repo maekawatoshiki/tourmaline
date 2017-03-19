@@ -28,30 +28,49 @@ void Codegen::def_std_func() {
       builder.getInt32Ty(), std::vector<llvm::Type *>{
         builder.getInt8PtrTy()
       }, false);
-  llvm::Function::Create(puts_func_ty, 
-      llvm::Function::ExternalLinkage, "puts", mod);
-
-  // define 'puts'
+  funcmap.add("puts", new Type(TYPEKIND_INT), Type_vec{new Type(TYPEKIND_STRING)}, 
+        llvm::Function::Create(puts_func_ty, 
+          llvm::Function::ExternalLinkage, "puts", mod));
+  // define 'puti'
   auto puti_func_ty = llvm::FunctionType::get(
       builder.getInt32Ty(), std::vector<llvm::Type *>{
         builder.getInt32Ty()
       }, false);
   llvm::Function::Create(puti_func_ty, 
       llvm::Function::ExternalLinkage, "puti", mod);
+  // define 'printf'
+  auto printf_func_ty = llvm::FunctionType::get(
+      builder.getInt32Ty(), std::vector<llvm::Type *>{
+        builder.getInt8PtrTy()
+      }, true);
+  funcmap.add("printf", new Type(TYPEKIND_INT), Type_vec{new Type(TYPEKIND_STRING)}, 
+        llvm::Function::Create(printf_func_ty, 
+          llvm::Function::ExternalLinkage, "printf", mod));
 }
 
 void Codegen::gen(AST_vec ast) {
+  // define functions excepting main function
+  std::list<AST *> main_body;
+  std::list<AST *> funcs_list;
+  for(auto st : ast) {
+    if(st->get_kind() == AST_FUNC_DEF) {
+      gen(st); // only create funcc's prototype
+      funcs_list.push_back(st);
+    } else main_body.push_back(st);
+  }
+  for(auto func : funcs_list) gen(func);
+
   // main func
   auto main_func_ty = llvm::FunctionType::get(
       builder.getInt32Ty(), std::vector<llvm::Type *>(), false);
   auto main_func = llvm::Function::Create(main_func_ty, 
       llvm::Function::ExternalLinkage, "main", mod);
-  funcmap.add("main", Type_vec{}, new Type(TYPEKIND_INT));
+  funcmap.add("main", new Type(TYPEKIND_INT), Type_vec{}, main_func);
   cur_func = funcmap.get("main");
 
   auto bb = llvm::BasicBlock::Create(context, "entry", main_func);
   builder.SetInsertPoint(bb);
-  for(auto st : ast) {
+  for(auto st : main_body) {
     gen(st);
   }
   builder.CreateRet(make_int(0));
@@ -67,7 +86,7 @@ void Codegen::gen(AST_vec ast) {
 llvm::Value *Codegen::gen(AST *ast) {
   if(!ast) return nullptr;
   switch(ast->get_kind()) {
-    case AST_FUNC_DEF:  break;
+    case AST_FUNC_DEF:  return gen((FuncDefAST *)ast);
     case AST_IF:        return gen((IfAST *)ast);
     case AST_BLOCK:     return gen((BlockAST *)ast);
     case AST_FUNC_CALL: return gen((FuncCallAST *)ast);
@@ -80,19 +99,78 @@ llvm::Value *Codegen::gen(AST *ast) {
   return nullptr;
 }
 
+llvm::Value *Codegen::gen(FuncDefAST *ast) {
+  func_t *func = nullptr;
+  if(funcmap.get(ast->get_name())) { // second visit. 
+    func = funcmap.get(ast->get_name());
+  } else {
+    auto llvm_func_ty = llvm::FunctionType::get(TypeUtil::to_type(ast->get_ret_ty()), 
+        [&]() -> std::vector<llvm::Type *> {
+        std::vector<llvm::Type *> args;
+        for(auto arg : ast->get_args()) {
+        args.push_back(TypeUtil::to_type(arg->type));
+        }
+        return args;
+        }(), false);
+    auto llvm_func = llvm::Function::Create(llvm_func_ty, 
+        llvm::GlobalValue::ExternalLinkage, ast->get_name(), mod);
+    funcmap.add(ast->get_name(), ast->get_ret_ty(), [&]() -> Type_vec {
+        Type_vec types;
+        for(auto t : ast->get_args())
+        types.push_back(t->type);
+        return types;
+        }(), llvm_func);
+
+    return llvm_func;
+  }
+
+  { // create function body
+    auto tmp_cur_func = cur_func;
+    cur_func = func;
+
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(llvm::getGlobalContext(), "entry", func->func);
+    builder.SetInsertPoint(entry);
+
+    for(auto arg : ast->get_args()) {
+      cur_func->varmap.add(arg->name, arg->type);
+    }
+
+    auto llvm_arg_it = func->func->arg_begin();
+    for(size_t i = 0; i < ast->get_args().size(); i++) {
+      std::string &name = ast->get_args()[i]->name;
+      llvm_arg_it->setName(name);
+      llvm::AllocaInst *ainst = create_entry_alloca(func->func, name, llvm_arg_it->getType());
+      builder.CreateStore(&*llvm_arg_it, ainst);
+      var_t *v = cur_func->varmap.get(name);
+      if(v) v->val = ainst;
+      llvm_arg_it++;
+    }
+
+    auto ret = gen(ast->get_body());
+    builder.CreateRet(ret);
+
+    cur_func = tmp_cur_func;
+  }
+  return func->func;
+}
+
 llvm::Value *Codegen::gen(FuncCallAST *ast) {
   // TODO: tentative implementation. must fix
   std::vector<llvm::Value *> args;
   for(auto a : ast->get_args())
     args.push_back(gen(a));
-  if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puts") {
-    auto f = mod->getFunction("puts");
-    if(!f) reporter.error("", 0, "%s %d f is null", __FILE__, __LINE__);
-    return builder.CreateCall(f, args);
-  } else if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puti") {
+  if(static_cast<VariableAST *>(ast->get_callee())->get_name() == "puti") {
     auto f = mod->getFunction("puti");
     if(!f) reporter.error("", 0, "is %d f is null", __FILE__, __LINE__);
     return builder.CreateCall(f, args);
+  } else {
+    llvm::Function *func = nullptr;
+    if(VariableAST *vast = static_cast<VariableAST *>(ast->get_callee())) {
+      auto f = funcmap.get(vast->get_name());
+      if(!f) reporter.error(filename, 0, "not found function '%s'", vast->get_name().c_str());
+      func = f->func;
+    }
+    return builder.CreateCall(func, args);
   }
   return nullptr;
 }
@@ -145,6 +223,10 @@ llvm::Value *Codegen::gen(BinaryOpAST *ast) {
   auto op = ast->get_op();
   if(op == "=") return make_assign(ast->get_lhs(), ast->get_rhs());
   if(op == "+") return make_add   (ast->get_lhs(), ast->get_rhs());
+  if(op == "-") return make_sub   (ast->get_lhs(), ast->get_rhs());
+  if(op == "*") return make_mul   (ast->get_lhs(), ast->get_rhs());
+  if(op =="==") return make_eql   (ast->get_lhs(), ast->get_rhs());
+  if(op == ">") return make_gt    (ast->get_lhs(), ast->get_rhs());
   reporter.error("", 0, "unknown operator %s %d", __FILE__, __LINE__);
   return nullptr;
 }
@@ -199,6 +281,38 @@ llvm::Value *Codegen::make_add(AST *alhs, AST *arhs) {
   }
   return nullptr;
 }
+llvm::Value *Codegen::make_sub(AST *alhs, AST *arhs) {
+  auto lhs = gen(alhs),
+       rhs = gen(arhs);
+  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+    return builder.CreateSub(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_mul(AST *alhs, AST *arhs) {
+  auto lhs = gen(alhs),
+       rhs = gen(arhs);
+  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+    return builder.CreateMul(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_eql(AST *alhs, AST *arhs) {
+  auto lhs = gen(alhs),
+       rhs = gen(arhs);
+  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+    return builder.CreateICmpEQ(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_gt(AST *alhs, AST *arhs) {
+  auto lhs = gen(alhs),
+       rhs = gen(arhs);
+  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+    return builder.CreateICmpSGT(lhs, rhs);
+  }
+  return nullptr;
+}
 
 llvm::Value *Codegen::get_var_val(VariableAST *ast) {
   auto name = ast->get_name();
@@ -226,6 +340,12 @@ llvm::Value *Codegen::type_cast(llvm::Value *val, llvm::Type *to) {
   } else if(to->isVoidTy()) return val;                                            
   return builder.CreateTruncOrBitCast(val, to);                                    
 }                                                                                  
+
+llvm::AllocaInst *Codegen::create_entry_alloca(llvm::Function *TheFunction, std::string &VarName, llvm::Type *type) {
+  llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
+      TheFunction->getEntryBlock().begin());
+  return TmpB.CreateAlloca(type == nullptr ? llvm::Type::getInt32Ty(context) : type, 0, VarName.c_str());
+}
 
 
 // standard func

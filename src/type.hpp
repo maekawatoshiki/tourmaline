@@ -26,4 +26,6 @@ typedef std::vector<Type *> Type_vec;
 
 namespace TypeUtil {
   Type *to_type(llvm::Type *);
+  llvm::Type *to_type(Type *);
+  Type *to_type(std::string);
 };

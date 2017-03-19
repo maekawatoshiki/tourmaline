@@ -34,16 +34,18 @@ typedef std::vector<func_arg_t *> func_args_t;
 class FuncDefAST : public AST {
   private:
     std::string name;
+    Type *ret_ty;
     func_args_t args;
-    AST_vec body;
+    AST *body;
   public:
-    FuncDefAST(std::string name, func_args_t args, AST_vec body);
+    FuncDefAST(std::string name, Type *ret_ty, func_args_t args, AST *body);
     virtual int get_kind() const { return AST_FUNC_DEF; };
     virtual void show();
 
     std::string get_name() const { return name; };
     func_args_t get_args() const { return args; };
-    AST_vec     get_body() const { return body; };
+    Type       *get_ret_ty() const { return ret_ty; };
+    AST*        get_body() const { return body; };
 };
 
 class IfAST : public AST {
