@@ -23,4 +23,4 @@ before_install:
 
 script:
   - make
-  - make test
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then make test; fi

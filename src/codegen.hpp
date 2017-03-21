@@ -4,7 +4,6 @@
 #include "ast.hpp"
 #include "error.hpp"
 #include "JIT.hpp"
-// #include "var.hpp"
 #include "func.hpp"
 
 extern llvm::IRBuilder<> builder;
@@ -16,7 +15,6 @@ class Codegen {
   private:
     std::string filename;
     Reporter reporter;
-    // VariableMap varmap;
     FunctionMap funcmap;
     func_t *cur_func = nullptr;
   public:
@@ -58,7 +56,6 @@ class Codegen {
 // th(is|ese) func will move to 'src/std_func.hpp'
 
 extern "C" {
-  int puti(int);
   void puts_va(const char *, ...);
   // TODO: tentative implementation. must fix
 };
