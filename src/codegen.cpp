@@ -205,12 +205,22 @@ llvm::Value *Codegen::gen(BlockAST *ast) {
 
 llvm::Value *Codegen::gen(BinaryOpAST *ast) {
   auto op = ast->get_op();
-  if(op == "=") return make_assign(ast->get_lhs(), ast->get_rhs());
-  if(op == "+") return make_add   (ast->get_lhs(), ast->get_rhs());
-  if(op == "-") return make_sub   (ast->get_lhs(), ast->get_rhs());
-  if(op == "*") return make_mul   (ast->get_lhs(), ast->get_rhs());
-  if(op =="==") return make_eql   (ast->get_lhs(), ast->get_rhs());
-  if(op == ">") return make_gt    (ast->get_lhs(), ast->get_rhs());
+  if(op == "&&" || op == "||" || op == "=") {
+    if(op == "=") return make_assign(ast->get_lhs(), ast->get_rhs());
+  } else {
+    auto lhs = gen(ast->get_lhs()),
+         rhs = gen(ast->get_rhs());
+    if(op == "+") return make_add   (lhs, rhs);
+    if(op == "-") return make_sub   (lhs, rhs);
+    if(op == "*") return make_mul   (lhs, rhs);
+    if(op == "/") return make_div   (lhs, rhs);
+    if(op =="==") return make_eql   (lhs, rhs);
+    if(op =="!=") return make_ne    (lhs, rhs);
+    if(op == "<") return make_lt    (lhs, rhs);
+    if(op == ">") return make_gt    (lhs, rhs);
+    if(op =="<=") return make_le    (lhs, rhs);
+    if(op ==">=") return make_ge    (lhs, rhs);
+  }
   reporter.error("", 0, "unknown operator %s %d", __FILE__, __LINE__);
   return nullptr;
 }
@@ -257,46 +267,68 @@ llvm::Value *Codegen::make_assign(AST *dst, AST *src) {
   }
   return builder.CreateStore(src_val, dst_val);
 }
-llvm::Value *Codegen::make_add(AST *alhs, AST *arhs) {
-  auto lhs = gen(alhs),
-       rhs = gen(arhs);
-  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+#define IS_INT_EXPR (lhs->getType()->isIntegerTy())
+llvm::Value *Codegen::make_add(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
     return builder.CreateAdd(lhs, rhs);
   }
   return nullptr;
 }
-llvm::Value *Codegen::make_sub(AST *alhs, AST *arhs) {
-  auto lhs = gen(alhs),
-       rhs = gen(arhs);
-  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+llvm::Value *Codegen::make_sub(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
     return builder.CreateSub(lhs, rhs);
   }
   return nullptr;
 }
-llvm::Value *Codegen::make_mul(AST *alhs, AST *arhs) {
-  auto lhs = gen(alhs),
-       rhs = gen(arhs);
-  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+llvm::Value *Codegen::make_mul(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
     return builder.CreateMul(lhs, rhs);
   }
   return nullptr;
 }
-llvm::Value *Codegen::make_eql(AST *alhs, AST *arhs) {
-  auto lhs = gen(alhs),
-       rhs = gen(arhs);
-  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+llvm::Value *Codegen::make_div(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
+    return builder.CreateSDiv(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_eql(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
     return builder.CreateICmpEQ(lhs, rhs);
   }
   return nullptr;
 }
-llvm::Value *Codegen::make_gt(AST *alhs, AST *arhs) {
-  auto lhs = gen(alhs),
-       rhs = gen(arhs);
-  if(lhs->getType()->isIntegerTy() && rhs->getType()->isIntegerTy()) {
+llvm::Value *Codegen::make_ne(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
+    return builder.CreateICmpNE(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_lt(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
+    return builder.CreateICmpSLT(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_gt(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
     return builder.CreateICmpSGT(lhs, rhs);
   }
   return nullptr;
 }
+llvm::Value *Codegen::make_le(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
+    return builder.CreateICmpSLE(lhs, rhs);
+  }
+  return nullptr;
+}
+llvm::Value *Codegen::make_ge(llvm::Value *lhs, llvm::Value *rhs) {
+  if(IS_INT_EXPR) {
+    return builder.CreateICmpSGE(lhs, rhs);
+  }
+  return nullptr;
+}
+#undef IS_INT_EXPR
 
 llvm::Value *Codegen::get_var_val(VariableAST *ast) {
   auto name = ast->get_name();

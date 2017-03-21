@@ -19,7 +19,7 @@ token_t Lexer::read_token() {
   }
   char c = ifs.get();
   if(ifs.eof()) return token_t(TOK_END, "");
-  if(c == '#') {
+  if(c == '#') { // ignore comment 
     while(ifs.get() != '\n' && !ifs.eof()){};
     cur_line++;
     return read_token();
@@ -72,7 +72,7 @@ token_t Lexer::read_blank() {
 token_t Lexer::read_string() {
   std::string content;
   ifs.get(); // "
-  for(char c = ifs.get(); c != '\"'; c = ifs.get())
+  for(char c = ifs.get(); c != '\"' || ifs.eof(); c = ifs.get())
     content += (c == '\\') ? replace_escape() : c;
   return token_t(TOK_STRING, content, cur_line);
 }

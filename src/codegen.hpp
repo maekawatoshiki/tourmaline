@@ -38,11 +38,16 @@ class Codegen {
 
     llvm::Value *make_if(llvm::Value *cond, llvm::BasicBlock *, llvm::BasicBlock *);
     llvm::Value *make_assign(AST *dst, AST *src);
-    llvm::Value *make_add   (AST *dst, AST *src);
-    llvm::Value *make_sub   (AST *dst, AST *src);
-    llvm::Value *make_mul   (AST *dst, AST *src);
-    llvm::Value *make_eql   (AST *dst, AST *src);
-    llvm::Value *make_gt    (AST *dst, AST *src);
+    llvm::Value *make_add   (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_sub   (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_mul   (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_div   (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_eql   (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_ne    (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_lt    (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_gt    (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_le    (llvm::Value *dst, llvm::Value *src);
+    llvm::Value *make_ge    (llvm::Value *dst, llvm::Value *src);
 
     llvm::Value *get_var_val(VariableAST *);
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));
@@ -55,4 +60,5 @@ class Codegen {
 extern "C" {
   int puti(int);
   void puts_va(const char *, ...);
+  // TODO: tentative implementation. must fix
 };
