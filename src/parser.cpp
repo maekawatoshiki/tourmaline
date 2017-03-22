@@ -27,7 +27,7 @@ AST *Parser::read_func_def() {
   if(lexer.skip("(")) {
     while(!lexer.skip(")") && !lexer.eot()) {
       std::string name = lexer.get().val;
-      Type *type = new Type(TYPEKIND_INT);
+      Type *type = new Type(Type::Int);
 
       std::string tyname = lexer.get().val;
       type = TypeUtil::to_type(tyname);
@@ -42,7 +42,7 @@ AST *Parser::read_func_def() {
     if(t.kind == TOK_IDENT) {
       return TypeUtil::to_type(t.val);
     } else lexer.unget(t);
-    return new Type(TYPEKIND_INT);
+    return new Type(Type::Int);
   }();
   auto body = new BlockAST([&]() -> AST_vec {
     AST_vec body_;

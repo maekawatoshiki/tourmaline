@@ -28,7 +28,7 @@ void Codegen::def_std_func() {
       builder.getVoidTy(), std::vector<llvm::Type *>{
         builder.getInt8PtrTy()
       }, true);
-  funcmap.add("puts", new Type(TYPEKIND_NONE), Type_vec{new Type(TYPEKIND_STRING)}, 
+  funcmap.add("puts", new Type(Type::None), Type_vec{new Type(Type::String)}, 
         llvm::Function::Create(puts_func_ty, 
           llvm::Function::ExternalLinkage, "puts_va", mod));
 }
@@ -39,18 +39,18 @@ void Codegen::gen(AST_vec ast) {
   std::list<AST *> funcs_list;
   for(auto st : ast) {
     if(st->get_kind() == AST_FUNC_DEF) {
-      gen(st); // only create funcc's prototype
+      gen(st); // only register the func to funcmap. do not generate the body of func
       funcs_list.push_back(st);
     } else main_body.push_back(st);
   }
-  for(auto func : funcs_list) gen(func);
+  for(auto func : funcs_list) gen(func); // create body
 
   // main func
   auto main_func_ty = llvm::FunctionType::get(
       builder.getInt32Ty(), std::vector<llvm::Type *>(), false);
   auto main_func = llvm::Function::Create(main_func_ty, 
       llvm::Function::ExternalLinkage, "main", mod);
-  funcmap.add("main", new Type(TYPEKIND_INT), Type_vec{}, main_func);
+  funcmap.add("main", new Type(Type::Int), Type_vec{}, main_func);
   cur_func = funcmap.get("main");
 
   auto bb = llvm::BasicBlock::Create(context, "entry", main_func);
@@ -88,23 +88,23 @@ llvm::Value *Codegen::gen(FuncDefAST *ast) {
   func_t *func = nullptr;
   if(funcmap.get(ast->get_name())) { // second visit. 
     func = funcmap.get(ast->get_name());
-  } else {
-    auto llvm_func_ty = llvm::FunctionType::get(TypeUtil::to_type(ast->get_ret_ty()), 
+  } else { // first visit
+    auto llvm_func_ty = llvm::FunctionType::get(ast->get_ret_ty()->to_llvmty(), 
         [&]() -> std::vector<llvm::Type *> {
-        std::vector<llvm::Type *> args;
-        for(auto arg : ast->get_args()) {
-        args.push_back(TypeUtil::to_type(arg->type));
-        }
-        return args;
+          std::vector<llvm::Type *> args;
+          for(auto arg : ast->get_args()) {
+            args.push_back(arg->type->to_llvmty());
+          }
+          return args;
         }(), false);
     auto llvm_func = llvm::Function::Create(llvm_func_ty, 
         llvm::GlobalValue::ExternalLinkage, ast->get_name(), mod);
     funcmap.add(ast->get_name(), ast->get_ret_ty(), [&]() -> Type_vec {
-        Type_vec types;
-        for(auto t : ast->get_args())
+      Type_vec types;
+      for(auto t : ast->get_args())
         types.push_back(t->type);
-        return types;
-        }(), llvm_func);
+      return types;
+    }(), llvm_func);
 
     return llvm_func;
   }
@@ -191,6 +191,8 @@ llvm::Value *Codegen::gen(IfAST *ast) {
   llvm::PHINode *pnode = builder.CreatePHI(then_val->getType(), 2);
   pnode->addIncoming(then_val, bb_then);
   pnode->addIncoming(else_val, bb_else);
+
+  retty_last_stmt = TypeUtil::to_type(pnode->getType());
   return pnode; 
 }
 
@@ -228,15 +230,18 @@ llvm::Value *Codegen::gen(BinaryOpAST *ast) {
 llvm::Value *Codegen::gen(VariableAST *ast) {
   auto name = ast->get_name();
   auto v = cur_func->varmap.get(name);
+  retty_last_stmt = v->type;
   if(!v) reporter.error(filename, 0, "undefined var '%s'", name.c_str());
   return builder.CreateLoad(v->val);
 }
 
 llvm::Value *Codegen::gen(INumberAST *ast) {
+  retty_last_stmt = Type::get_int_ty();
   return make_int(ast->get_number());
 }
 
 llvm::Value *Codegen::gen(StringAST *ast) {
+  retty_last_stmt = Type::get_string_ty();
   auto s = llvm::ConstantDataArray::getString(context, ast->get_str());
   llvm::GlobalVariable *gv = new llvm::GlobalVariable(*mod, s->getType(),
       true, llvm::GlobalValue::PrivateLinkage,
@@ -251,7 +256,7 @@ llvm::Value *Codegen::make_if(llvm::Value *cond, llvm::BasicBlock *bb_then, llvm
 
 llvm::Value *Codegen::make_assign(AST *dst, AST *src) {
   auto src_val = gen(src);
-  auto type = TypeUtil::to_type(src_val->getType());
+  auto type = retty_last_stmt;
   llvm::Value *dst_val = nullptr;
   if(VariableAST *vast = static_cast<VariableAST *>(dst)) {
     auto name = vast->get_name();

@@ -17,6 +17,7 @@ class Codegen {
     Reporter reporter;
     FunctionMap funcmap;
     func_t *cur_func = nullptr;
+    Type *retty_last_stmt = nullptr;
   public:
     Codegen();
     void set_filename(std::string);
