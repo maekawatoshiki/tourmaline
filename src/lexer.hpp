@@ -3,15 +3,6 @@
 #include "common.hpp"
 #include "error.hpp"
 
-enum {
-  TOK_IDENT,
-  TOK_INUMBER,
-  TOK_FNUMBER,
-  TOK_STRING,
-  TOK_SYMBOL,
-  TOK_NEWLINE,
-  TOK_END,
-};
 
 struct token_t {
   token_t(int _kind, std::string _val, int _line = 0):
@@ -42,6 +33,15 @@ class Lexer {
 
     char replace_escape();
   public:
+    enum {
+      Ident,
+      INumber,
+      FNumber,
+      String,
+      Symbol,
+      Newline,
+      End,
+    };
     void set_filename(std::string);
     std::string get_filename();
 

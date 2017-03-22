@@ -39,7 +39,7 @@ AST *Parser::read_func_def() {
   }
   auto ret_ty = [&]() -> Type * {
     auto t = lexer.get();
-    if(t.kind == TOK_IDENT) {
+    if(t.kind == Lexer::Ident) {
       return TypeUtil::to_type(t.val);
     } else lexer.unget(t);
     return new Type(Type::Int);
@@ -212,18 +212,18 @@ AST *Parser::read_func_call() {
 AST *Parser::read_primary() {
   auto t = lexer.get();
   switch(t.kind) {
-    case TOK_INUMBER: 
+    case Lexer::INumber: 
       return new INumberAST(atoi(t.val.c_str()));
-    case TOK_FNUMBER:
+    case Lexer::FNumber:
       break;
-    case TOK_STRING:
+    case Lexer::String:
       return new StringAST(t.val);
-    case TOK_IDENT:
+    case Lexer::Ident:
       if(t.val == "if") {
         return read_if();
       } else 
         return new VariableAST(t.val);
-    case TOK_SYMBOL:
+    case Lexer::Symbol:
       if(t.val == "(") {
         auto expr = read_expr();
         lexer.skip(")");
@@ -238,7 +238,7 @@ AST *Parser::read_if() {
   auto cond = read_expr();
   if(!lexer.skip("then")) 
      if(!lexer.skip(";")) { auto t = lexer.get();
-      if(t.kind != TOK_NEWLINE) 
+      if(t.kind != Lexer::Newline) 
         reporter.error(get_filename(), t.line, "expected '\\n', ';' or 'then'");}
 
   // TODO: not beautiful, FIX

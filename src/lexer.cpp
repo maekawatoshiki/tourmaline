@@ -18,7 +18,7 @@ token_t Lexer::read_token() {
     return f;
   }
   char c = ifs.get();
-  if(ifs.eof()) return token_t(TOK_END, "");
+  if(ifs.eof()) return token_t(End, "");
   if(c == '#') { // ignore comment 
     while(ifs.get() != '\n' && !ifs.eof()){};
     cur_line++;
@@ -51,7 +51,7 @@ token_t Lexer::read_number() {
     last = c;
   }
   ifs.unget();
-  return token_t(is_float_tok ? TOK_FNUMBER : TOK_INUMBER, number, cur_line);
+  return token_t(is_float_tok ? FNumber : INumber, number, cur_line);
 }
 
 token_t Lexer::read_ident() {
@@ -61,7 +61,7 @@ token_t Lexer::read_ident() {
       c == '_'; c = ifs.get())
     ident += c;
   ifs.unget();
-  return token_t(TOK_IDENT, ident, cur_line);
+  return token_t(Ident, ident, cur_line);
 }
 
 token_t Lexer::read_blank() {
@@ -74,13 +74,13 @@ token_t Lexer::read_string() {
   ifs.get(); // "
   for(char c = ifs.get(); c != '\"' || ifs.eof(); c = ifs.get())
     content += (c == '\\') ? replace_escape() : c;
-  return token_t(TOK_STRING, content, cur_line);
+  return token_t(String, content, cur_line);
 }
 
 token_t Lexer::read_newline() {
   cur_line++;
   get_char();
-  return token_t(TOK_NEWLINE, "", cur_line);
+  return token_t(Newline, "", cur_line);
 }
 
 token_t Lexer::read_symbol() {
@@ -128,7 +128,7 @@ token_t Lexer::read_symbol() {
       if(next_char_is('.')) op += get_char();
       break;
   }
-  return token_t(TOK_SYMBOL, op, cur_line);
+  return token_t(Symbol, op, cur_line);
 }
 
 char Lexer::replace_escape() {
@@ -167,28 +167,28 @@ void Lexer::unget(token_t t) {
 
 bool Lexer::next_token_is(std::string s) {
   auto t = get();
-  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
+  auto is_next_token_expected = ((t.kind == Ident || t.kind == Symbol) && t.val == s);
   unget(t);
   return is_next_token_expected;
 }
 
 bool Lexer::skip(std::string s) { 
   auto t = get();
-  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
+  auto is_next_token_expected = ((t.kind == Ident || t.kind == Symbol) && t.val == s);
   if(!is_next_token_expected) unget(t);
   return is_next_token_expected;
 }
 
 bool Lexer::expect_skip(std::string s) { 
   auto t = get();
-  auto is_next_token_expected = ((t.kind == TOK_IDENT || t.kind == TOK_SYMBOL) && t.val == s);
+  auto is_next_token_expected = ((t.kind == Ident || t.kind == Symbol) && t.val == s);
   if(!is_next_token_expected) reporter.error(get_filename(), t.line, "expected '%s'", s.c_str());
   return is_next_token_expected;
 }
 
 bool Lexer::eot() {
   auto t = get();
-  if(t.kind == TOK_END) return true;
+  if(t.kind == End) return true;
   unget(t);
   return false;
 }
