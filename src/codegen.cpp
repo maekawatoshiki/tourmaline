@@ -28,9 +28,17 @@ void Codegen::def_std_func() {
       builder.getVoidTy(), std::vector<llvm::Type *>{
         builder.getInt8PtrTy()
       }, true);
-  funcmap.add("puts", new Type(Type::None), Type_vec{new Type(Type::String)}, 
+  funcmap.add("puts", Type::get_none_ty(), Type_vec{Type::get_string_ty()}, 
         llvm::Function::Create(puts_func_ty, 
-          llvm::Function::ExternalLinkage, "puts_va", mod));
+          llvm::Function::ExternalLinkage, "puts_va", mod), true);
+  // define 'print'
+  auto print_func_ty = llvm::FunctionType::get(
+      builder.getVoidTy(), std::vector<llvm::Type *>{
+        builder.getInt8PtrTy()
+      }, true);
+  funcmap.add("print", Type::get_none_ty(), Type_vec{Type::get_string_ty()}, 
+        llvm::Function::Create(print_func_ty, 
+          llvm::Function::ExternalLinkage, "print_va", mod), true);
 }
 
 void Codegen::gen(AST_vec ast) {
@@ -50,7 +58,7 @@ void Codegen::gen(AST_vec ast) {
       builder.getInt32Ty(), std::vector<llvm::Type *>(), false);
   auto main_func = llvm::Function::Create(main_func_ty, 
       llvm::Function::ExternalLinkage, "main", mod);
-  funcmap.add("main", new Type(Type::Int), Type_vec{}, main_func);
+  funcmap.add("main", Type::get_int_ty(), Type_vec{}, main_func);
   cur_func = funcmap.get("main");
 
   auto bb = llvm::BasicBlock::Create(context, "entry", main_func);
@@ -141,14 +149,27 @@ llvm::Value *Codegen::gen(FuncDefAST *ast) {
 
 llvm::Value *Codegen::gen(FuncCallAST *ast) {
   std::vector<llvm::Value *> args;
-  for(auto a : ast->get_args())
-    args.push_back(gen(a));
   {
     llvm::Function *func = nullptr;
     if(VariableAST *vast = static_cast<VariableAST *>(ast->get_callee())) {
       auto f = funcmap.get(vast->get_name());
       if(!f) reporter.error(filename, 0, "not found function '%s'", vast->get_name().c_str());
       func = f->func;
+      if(f->varg) { // variable-length args
+        size_t i = 0, minimum_args_size = f->args.size();
+        for(i = 0; i < minimum_args_size; i++) 
+          args.push_back(gen(ast->get_args()[i]));
+
+        size_t args_size = ast->get_args().size();
+        for(; i < args_size; i++) {
+          auto val = gen(ast->get_args()[i]);
+          args.push_back(llvm::ConstantInt::get(builder.getInt64Ty(), (uint64_t)retty_last_stmt));
+          args.push_back(val);
+        }
+      } else {
+        for(auto a : ast->get_args())
+          args.push_back(gen(a));
+      }
     }
     return builder.CreateCall(func, args);
   }
@@ -371,11 +392,45 @@ llvm::AllocaInst *Codegen::create_entry_alloca(llvm::Function *TheFunction, std:
 
 // standard func
 extern "C" {
-  void puts_va(const char *str, ...) {
+  void puts_va(char *str, ...) {
     va_list args;
     va_start(args, str);
-    vprintf(str, args); 
-    puts("");
+    {
+      for(char *p = str; *p; p++) {
+
+      if(*p == '{' && *(++p) == '}') {
+        Type *ty = va_arg(args, Type *);
+        switch(ty->get()) {
+          case Type::None: break;
+          case Type::Int:    printf("%d", va_arg(args, int)); break;
+          case Type::Float:  printf("%.15g", va_arg(args, double)); break;
+          case Type::String: printf("%s", va_arg(args, char *)); break;
+        }
+      } else putchar(*p);
+
+      }
+      puts("");
+    }
+    va_end(args);
+  }
+  void print_va(char *str, ...) {
+    va_list args;
+    va_start(args, str);
+    {
+      for(char *p = str; *p; p++) {
+
+      if(*p == '{' && *(++p) == '}') {
+        Type *ty = va_arg(args, Type *);
+        switch(ty->get()) {
+          case Type::None: break;
+          case Type::Int:    printf("%d", va_arg(args, int)); break;
+          case Type::Float:  printf("%.15g", va_arg(args, double)); break;
+          case Type::String: printf("%s", va_arg(args, char *)); break;
+        }
+      } else putchar(*p);
+
+      }
+    }
     va_end(args);
   }
 };

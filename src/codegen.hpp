@@ -57,6 +57,7 @@ class Codegen {
 // th(is|ese) func will move to 'src/std_func.hpp'
 
 extern "C" {
-  void puts_va(const char *, ...);
+  void puts_va(char *, ...);
+  void print_va(char *, ...);
   // TODO: tentative implementation. must fix
 };

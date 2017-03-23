@@ -2,7 +2,7 @@
 def loop(n int)
   if n > 0
     loop(n - 1)
-    puts("fact(%d) = %d", n, fact(n))
+    puts("fact({}) = {}", n, fact(n))
   end
 end
 
