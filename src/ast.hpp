@@ -9,6 +9,8 @@ enum {
   AST_IF,
   AST_BLOCK,
   AST_BINARY_OP,
+  AST_INDEX,
+  AST_ARRAY,
   AST_VARIABLE,
   AST_INUMBER,
   AST_STRING,
@@ -86,8 +88,8 @@ class FuncCallAST : public AST {
 
 class BinaryOpAST : public AST {
   private:
-    AST *lhs, *rhs;
     std::string op;
+    AST *lhs, *rhs;
   public:
     BinaryOpAST(std::string op, AST *lhs, AST *rhs);
     virtual int get_kind() const { return AST_BINARY_OP; };
@@ -96,6 +98,30 @@ class BinaryOpAST : public AST {
     AST         *get_lhs() const { return lhs; };
     AST         *get_rhs() const { return rhs; };
     std::string  get_op()  const { return op; };
+};
+
+class IndexAST : public AST {
+  private:
+    AST *dst, *idx;
+  public:
+    IndexAST(AST *dst, AST *idx);
+    virtual int get_kind() const { return AST_INDEX; };
+    virtual void show();
+
+    AST         *get_dst() const { return dst; };
+    AST         *get_idx() const { return idx; };
+};
+
+class ArrayAST : public AST {
+  private:
+    std::vector<AST *> elements;
+  public:
+    ArrayAST() {};
+    ArrayAST(std::vector<AST *>);
+    virtual int get_kind() const { return AST_ARRAY; };
+    virtual void show();
+
+    std::vector<AST *> get_elements() const { return elements; };
 };
 
 class VariableAST : public AST {

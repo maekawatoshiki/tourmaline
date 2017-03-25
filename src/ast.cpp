@@ -63,6 +63,29 @@ void BinaryOpAST::show() {
   std::cout << "))";
 }
 
+IndexAST::IndexAST(AST *_dst, AST *_idx):
+  dst(_dst), idx(_idx) {
+}
+void IndexAST::show() {
+  std::cout << "([]" << " (";
+  dst->show();
+  std::cout << ") (";
+  idx->show();
+  std::cout << "))";
+}
+
+ArrayAST::ArrayAST(std::vector<AST *> _elements):
+  elements(_elements) {
+}
+void ArrayAST::show() {
+  std::cout << "(array (";
+  for(auto elem : elements) {
+    elem->show();
+    putchar(' ');
+  }
+  std::cout << "))";
+}
+
 VariableAST::VariableAST(std::string _name):
   name(_name) {
 }

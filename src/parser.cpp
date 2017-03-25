@@ -179,7 +179,7 @@ AST *Parser::read_add_sub() {
 }
 
 AST *Parser::read_mul_div_mod() {
-  AST *lhs = read_func_call();
+  AST *lhs = read_index();
   bool is_mul = lexer.next_token_is("*"),
        is_div = lexer.next_token_is("/"),
        is_mod = lexer.next_token_is("%");
@@ -191,6 +191,16 @@ AST *Parser::read_mul_div_mod() {
     is_mul = lexer.next_token_is("*");
     is_div = lexer.next_token_is("/");
     is_mod = lexer.next_token_is("%");
+  }
+  return lhs;
+}
+
+AST *Parser::read_index() {
+  AST *lhs = read_func_call();
+  while(lexer.skip("[")) {
+    AST *idx = read_expr();
+    lexer.expect_skip("]");
+    lhs = new IndexAST(lhs, idx);
   }
   return lhs;
 }
@@ -228,10 +238,23 @@ AST *Parser::read_primary() {
         auto expr = read_expr();
         lexer.skip(")");
         return expr;
+      } else if(t.val == "[") {
+        return read_array();
       }
       break;
   }
   return nullptr;
+}
+
+AST *Parser::read_array() {
+  if(lexer.skip("]")) return new ArrayAST();
+  std::vector<AST *> elements;
+  while(!lexer.skip("]") && !lexer.eot()) {
+    elements.push_back( read_expr() );
+    if(lexer.skip("]")) break;
+    lexer.expect_skip(",");
+  }
+  return new ArrayAST(elements);
 }
 
 AST *Parser::read_if() {

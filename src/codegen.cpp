@@ -84,6 +84,8 @@ llvm::Value *Codegen::gen(AST *ast) {
     case AST_BLOCK:     return gen((BlockAST *)ast);
     case AST_FUNC_CALL: return gen((FuncCallAST *)ast);
     case AST_BINARY_OP: return gen((BinaryOpAST *)ast);
+    case AST_INDEX:     return gen((IndexAST *)ast);
+    case AST_ARRAY:     return gen((ArrayAST *)ast);
     case AST_VARIABLE:  return gen((VariableAST *)ast);
     case AST_INUMBER:   return gen((INumberAST *)ast);
     case AST_STRING:    return gen((StringAST *)ast);
@@ -248,6 +250,33 @@ llvm::Value *Codegen::gen(BinaryOpAST *ast) {
   return nullptr;
 }
 
+llvm::Value *Codegen::gen(IndexAST *ast) {
+  auto dst = gen(ast->get_dst());
+  assert(retty_last_stmt->get() == Type::Array);
+  auto retty = retty_last_stmt->get_next();
+  auto idx = gen(ast->get_idx());
+  retty_last_stmt = retty;
+  return builder.CreateLoad(get_element_val(dst, idx));
+}
+
+llvm::Value *Codegen::gen(ArrayAST *ast) {
+  std::vector<llvm::Value *> ary_vals;
+  Type *elem_ty = nullptr;
+  for(auto elem : ast->get_elements()) {
+    ary_vals.push_back( gen(elem) );
+    if(!elem_ty) elem_ty = retty_last_stmt;
+  }
+  auto ary_ty = new Type(elem_ty);
+  uint64_t *ary_ptr = (uint64_t *)calloc(ast->get_elements().size(), sizeof(int));
+  llvm::Value *ary = llvm::ConstantExpr::getIntToPtr(
+    llvm::ConstantInt::get(builder.getInt64Ty(), (uint64_t)ary_ptr), ary_ty->to_llvmty());
+  for(size_t i = 0; i < ast->get_elements().size(); i++) {
+    builder.CreateStore(ary_vals[i], get_element_val(ary, i));
+  }
+  retty_last_stmt = ary_ty;
+  return ary;
+}
+
 llvm::Value *Codegen::gen(VariableAST *ast) {
   auto name = ast->get_name();
   auto v = cur_func->varmap.get(name);
@@ -356,6 +385,16 @@ llvm::Value *Codegen::make_ge(llvm::Value *lhs, llvm::Value *rhs) {
 }
 #undef IS_INT_EXPR
 
+llvm::Value *Codegen::get_element_val(llvm::Value *ary, int idx) {
+  return get_element_val(ary, make_int(idx));
+}
+
+llvm::Value *Codegen::get_element_val(llvm::Value *ary, llvm::Value *idx) {
+  return llvm::GetElementPtrInst::CreateInBounds(              
+      ary,                                                       
+      llvm::ArrayRef<llvm::Value *>{idx}, "elem", builder.GetInsertBlock());  
+}
+
 llvm::Value *Codegen::get_var_val(VariableAST *ast) {
   auto name = ast->get_name();
   auto v = cur_func->varmap.get(name);
@@ -405,6 +444,7 @@ extern "C" {
           case Type::Int:    printf("%d", va_arg(args, int)); break;
           case Type::Float:  printf("%.15g", va_arg(args, double)); break;
           case Type::String: printf("%s", va_arg(args, char *)); break;
+          case Type::Array:  printf("Array<0x%lx>", va_arg(args, uint64_t)); break;
         }
       } else putchar(*p);
 
@@ -426,6 +466,7 @@ extern "C" {
           case Type::Int:    printf("%d", va_arg(args, int)); break;
           case Type::Float:  printf("%.15g", va_arg(args, double)); break;
           case Type::String: printf("%s", va_arg(args, char *)); break;
+          case Type::Array:  printf("Array<0x%lx>", va_arg(args, uint64_t)); break;
         }
       } else putchar(*p);
 

@@ -28,7 +28,9 @@ class Parser {
     AST *read_shift();
     AST *read_add_sub();
     AST *read_mul_div_mod();
+    AST *read_index();
     AST *read_func_call();
     AST *read_primary();
+    AST *read_array();
     AST *read_if();
 };

@@ -31,6 +31,8 @@ class Codegen {
     llvm::Value *gen(IfAST *);
     llvm::Value *gen(BlockAST *);
     llvm::Value *gen(BinaryOpAST *);
+    llvm::Value *gen(IndexAST *);
+    llvm::Value *gen(ArrayAST *);
     llvm::Value *gen(VariableAST *);
     llvm::Value *gen(INumberAST *);
     llvm::Value *gen(StringAST *);
@@ -48,6 +50,8 @@ class Codegen {
     llvm::Value *make_le    (llvm::Value *dst, llvm::Value *src);
     llvm::Value *make_ge    (llvm::Value *dst, llvm::Value *src);
 
+    llvm::Value *get_element_val(llvm::Value *, int);
+    llvm::Value *get_element_val(llvm::Value *, llvm::Value *);
     llvm::Value *get_var_val(VariableAST *);
     llvm::Value *make_int(int, llvm::Type * = llvm::Type::getInt32Ty(llvm::getGlobalContext()));
     llvm::Value *type_cast(llvm::Value *, llvm::Type *);

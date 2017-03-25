@@ -6,12 +6,21 @@ Type::Type(Type::Kind _kind):
   kind(_kind) {
 }
 
+Type::Type(Type *_next):
+  kind(Type::Array), next(_next) {
+}
+
 Type::Kind Type::get() {
   return kind;
 }
 
+Type *Type::get_next() {
+  return next;
+}
+
 void Type::set(Type *ty) {
   this->kind = ty->get();
+  this->next = ty->get_next();
 }
 
 std::string Type::to_string() {
@@ -20,6 +29,7 @@ std::string Type::to_string() {
     case Type::Int: return "int";
     case Type::Float: return "float";
     case Type::String: return "string";
+    case Type::Array: return next->to_string() + "[]";
   }
   return "";
 }
@@ -30,6 +40,7 @@ llvm::Type *Type::to_llvmty() {
     case Type::Int:   return llvm::Type::getInt32Ty(llvm::getGlobalContext());
     case Type::Float: return llvm::Type::getDoubleTy(llvm::getGlobalContext());
     case Type::String:return llvm::Type::getInt8PtrTy(llvm::getGlobalContext());
+    case Type::Array: return next->to_llvmty()->getPointerTo();
   }
   return nullptr;
 }
@@ -41,6 +52,7 @@ namespace TypeUtil {
         ty->getPointerElementType()->isIntegerTy(8)) 
       return new Type(Type::String);
     if(ty->isDoubleTy()) return new Type(Type::Float);
+    if(ty->isPointerTy()) return new Type(to_type(ty->getPointerElementType()));
     return nullptr;
   }
   Type *to_type(std::string ty) {

@@ -13,10 +13,13 @@ class Type {
       Int,
       Float,
       String,
+      Array,
     };
     Type(Kind);
+    Type(Type *);
 
     Kind get();
+    Type *get_next();
     void set(Type *);
 
     std::string to_string();
@@ -28,6 +31,7 @@ class Type {
     static Type *get_string_ty() { return &string_ty; }
   private:
     Kind kind;
+    Type *next;
 };
 
 typedef std::vector<Type *> Type_vec;
