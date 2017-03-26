@@ -159,8 +159,10 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
       func = f->func;
       if(f->varg) { // variable-length args
         size_t i = 0, minimum_args_size = f->args.size();
-        for(i = 0; i < minimum_args_size; i++) 
+        for(i = 0; i < minimum_args_size; i++) {
           args.push_back(gen(ast->get_args()[i]));
+          args.back()->dump();
+        }
 
         size_t args_size = ast->get_args().size();
         for(; i < args_size; i++) {
@@ -169,8 +171,10 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
           args.push_back(val);
         }
       } else {
-        for(auto a : ast->get_args())
+        for(auto a : ast->get_args()) {
           args.push_back(gen(a));
+          args.back()->dump();
+        }
       }
     }
     return builder.CreateCall(func, args);
@@ -292,12 +296,13 @@ llvm::Value *Codegen::gen(INumberAST *ast) {
 
 llvm::Value *Codegen::gen(StringAST *ast) {
   retty_last_stmt = Type::get_string_ty();
-  auto s = llvm::ConstantDataArray::getString(context, ast->get_str());
-  llvm::GlobalVariable *gv = new llvm::GlobalVariable(*mod, s->getType(),
-      true, llvm::GlobalValue::PrivateLinkage,
-      s, "", nullptr,
-      llvm::GlobalVariable::NotThreadLocal, 0);
-  return builder.CreateInBoundsGEP(gv->getValueType(), gv, std::vector<llvm::Value *> { make_int(0), make_int(0) });
+  // auto s = llvm::ConstantDataArray::getString(context, ast->get_str());
+  // llvm::GlobalVariable *gv = new llvm::GlobalVariable(*mod, s->getType(),
+  //     true, llvm::GlobalValue::PrivateLinkage,
+  //     s, "", nullptr,
+  //     llvm::GlobalVariable::NotThreadLocal, 0);
+  // return builder.CreateInBoundsGEP(gv->getValueType(), gv, std::vector<llvm::Value *> { make_int(0), make_int(0) });
+  return  builder.CreateGlobalStringPtr(ast->get_str());
 }
 
 llvm::Value *Codegen::make_if(llvm::Value *cond, llvm::BasicBlock *bb_then, llvm::BasicBlock *bb_else) {
