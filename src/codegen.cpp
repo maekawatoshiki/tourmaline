@@ -159,10 +159,8 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
       func = f->func;
       if(f->varg) { // variable-length args
         size_t i = 0, minimum_args_size = f->args.size();
-        for(i = 0; i < minimum_args_size; i++) {
-          args.push_back(gen(ast->get_args()[i]));
-          args.back()->dump();
-        }
+        for(i = 0; i < minimum_args_size; i++)
+          args.push_back( type_cast(gen(ast->get_args()[i]), f->args[i]->to_llvmty()) );
 
         size_t args_size = ast->get_args().size();
         for(; i < args_size; i++) {
@@ -171,10 +169,9 @@ llvm::Value *Codegen::gen(FuncCallAST *ast) {
           args.push_back(val);
         }
       } else {
-        for(auto a : ast->get_args()) {
-          args.push_back(gen(a));
-          args.back()->dump();
-        }
+        size_t args_size = ast->get_args().size();
+        for(size_t i = 0; i < args_size; i++) 
+          args.push_back( type_cast(gen(ast->get_args()[i]), f->args[i]->to_llvmty()) );
       }
     }
     return builder.CreateCall(func, args);
@@ -325,7 +322,7 @@ llvm::Value *Codegen::make_assign(AST *dst, AST *src) {
     // TODO: tentative
     dst_val = gen(dst);
   }
-  return builder.CreateStore(src_val, dst_val);
+  return builder.CreateStore( type_cast(src_val, dst_val->getType()->getPointerElementType()), dst_val);
 }
 #define IS_INT_EXPR (lhs->getType()->isIntegerTy())
 llvm::Value *Codegen::make_add(llvm::Value *lhs, llvm::Value *rhs) {
