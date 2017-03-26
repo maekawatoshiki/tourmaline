@@ -22,5 +22,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@3.8; fi
 
 script:
+  - cmake .
   - make
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then make test; fi
