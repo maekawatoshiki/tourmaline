@@ -1,5 +1,6 @@
 project(tourmaline)
 cmake_minimum_required(VERSION 2.8)
+set(CMAKE_VERBOSE_MAKEFILE 1)
 enable_testing()
 
 set(LLVM_CONFIG "llvm-config-3.8")
