@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 2.8)
 project(tourmaline)
-set(CMAKE_VERBOSE_MAKEFILE 1)
+cmake_minimum_required(VERSION 2.8)
+enable_testing()
 
-set(LLVM_CONFIG "llvm-config-mp-3.8")
-set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+set(LLVM_CONFIG "llvm-config-3.8")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 add_definitions("-O3 -std=c++11")
 add_definitions("-D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS") # for LLVM
+
 execute_process(
   COMMAND
   ${LLVM_CONFIG} --includedir
@@ -44,3 +44,11 @@ endforeach (l)
 include_directories(${LLVM_INCLUDES})
 link_directories(${LLVM_LIBRARIES})
 add_subdirectory(src)
+
+# TODO: tentative tests. fix
+add_test(test-ary   "./tourmaline" "example/ary.rb")
+add_test(test-fact  "./tourmaline" "example/fact.rb")
+add_test(test-hello "./tourmaline" "example/hello.rb")
+add_test(test-if    "./tourmaline" "example/if.rb")
+add_test(test-op    "./tourmaline" "example/op.rb")
+add_test(test-var   "./tourmaline" "example/var.rb")
